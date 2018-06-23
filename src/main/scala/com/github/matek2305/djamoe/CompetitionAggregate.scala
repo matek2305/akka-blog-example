@@ -9,14 +9,14 @@ import scala.concurrent.{Future, Promise}
 /**
   * @author Mateusz Urbański <matek2305@gmail.com>.
   */
-class CompetitionAggregate extends PersistentActor with ActorLogging {
+class CompetitionAggregate(id: String) extends PersistentActor with ActorLogging {
 
   import CompetitionAggregate._
   import context._
 
   private var state = CompetitionState(Map.empty)
 
-  override def persistenceId: String = "competition-aggregate"
+  override def persistenceId: String = id
 
   override def receiveCommand: Receive = {
     case GetAllMatches =>
@@ -48,7 +48,7 @@ class CompetitionAggregate extends PersistentActor with ActorLogging {
 
 object CompetitionAggregate {
 
-  def props = Props(new CompetitionAggregate())
+  def props(id: String) = Props(new CompetitionAggregate(id))
 
   sealed trait MatchCommand
 
