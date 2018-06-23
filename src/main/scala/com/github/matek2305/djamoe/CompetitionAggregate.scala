@@ -1,15 +1,15 @@
 package com.github.matek2305.djamoe
 
-import akka.actor.Props
+import akka.actor.{ActorLogging, Props}
 import akka.pattern.pipe
-import akka.persistence.PersistentActor
+import akka.persistence.{PersistentActor, RecoveryCompleted}
 
 import scala.concurrent.{Future, Promise}
 
 /**
   * @author Mateusz Urbański <matek2305@gmail.com>.
   */
-class CompetitionAggregate extends PersistentActor {
+class CompetitionAggregate extends PersistentActor with ActorLogging {
 
   import CompetitionAggregate._
   import context._
@@ -27,23 +27,22 @@ class CompetitionAggregate extends PersistentActor {
   }
 
   override def receiveRecover: Receive = {
-    case event: MatchEvent =>
-      updateState(event)
-      ()
+    case event: MatchEvent => state = applyEvent(event)
+    case RecoveryCompleted => log.info("Recovery completed!")
   }
 
   private def handleEvent[E <: MatchEvent](e: => E): Future[E] = {
     val promise = Promise[E]
     persist(e) { event =>
       promise.success(event)
-      updateState(event)
+      state = applyEvent(event)
       system.eventStream.publish(event)
     }
     promise.future
   }
 
-  private def updateState(event: MatchEvent): Unit = event match {
-    case created: MatchCreated => state += created
+  private def applyEvent(event: MatchEvent): CompetitionState = event match {
+    case created: MatchCreated => state.add(created.id, created.details)
   }
 }
 
@@ -64,8 +63,8 @@ object CompetitionAggregate {
 
   final case class CompetitionState(matches: Map[MatchId, MatchDetails]) {
     def apply(): List[MatchDetails] = matches.values.toList
-    def +(event: MatchCreated): CompetitionState =
-      CompetitionState(matches.updated(event.id, event.details))
+    def add(id: MatchId, details: MatchDetails): CompetitionState =
+      CompetitionState(matches.updated(id, details))
   }
 
 }
