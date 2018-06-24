@@ -43,6 +43,7 @@ class CompetitionAggregate(id: String) extends PersistentActor with ActorLogging
 
   private def applyEvent(event: MatchEvent): CompetitionState = event match {
     case created: MatchCreated => state.add(created.id, created.details)
+    case finished: MatchFinished => state.finishMatch(finished.id, finished.score)
   }
 }
 
@@ -54,17 +55,29 @@ object CompetitionAggregate {
 
   final case class GetAllMatches() extends MatchCommand
   final case class CreateMatch(details: MatchDetails) extends MatchCommand
+  final case class FinishMatch(id: MatchId, score: MatchScore) extends MatchCommand
 
   sealed trait MatchEvent {
     val id: MatchId
   }
 
   final case class MatchCreated(id: MatchId, details: MatchDetails) extends MatchEvent
+  final case class MatchFinished(id: MatchId, score: MatchScore) extends MatchEvent
 
-  final case class CompetitionState(matches: Map[MatchId, MatchDetails]) {
-    def apply(): List[MatchDetails] = matches.values.toList
+  final case class CompetitionState(matches: Map[MatchId, MatchState]) {
+    def apply(): List[MatchState] = matches.values.toList
     def add(id: MatchId, details: MatchDetails): CompetitionState =
-      CompetitionState(matches.updated(id, details))
+      CompetitionState(matches.updated(id, MatchState(details)))
+    def finishMatch(id: MatchId, score: MatchScore): CompetitionState =
+      CompetitionState(matches.updated(id, matches(id).finish(score)))
+  }
+  
+  final case class MatchState(details: MatchDetails, score: MatchScore) {
+    def finish(score: MatchScore): MatchState = copy(score = score)
+  }
+
+  object MatchState {
+    def apply(details: MatchDetails): MatchState = MatchState(details, null)
   }
 
 }

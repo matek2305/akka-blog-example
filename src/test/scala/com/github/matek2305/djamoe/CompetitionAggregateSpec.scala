@@ -4,7 +4,7 @@ import java.time.{LocalDateTime, Month}
 
 import akka.actor.{ActorSystem, PoisonPill}
 import akka.testkit.{ImplicitSender, TestKit}
-import com.github.matek2305.djamoe.CompetitionAggregate.{CreateMatch, GetAllMatches, MatchCreated}
+import com.github.matek2305.djamoe.CompetitionAggregate.{CreateMatch, GetAllMatches, MatchCreated, MatchState}
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
 /**
@@ -40,7 +40,7 @@ class CompetitionAggregateSpec
 
       val restored = system.actorOf(CompetitionAggregate.props(competitionId))
       restored ! GetAllMatches
-      expectMsg(List(matchDetails))
+      expectMsg(List(MatchState(matchDetails)))
     }
   }
 
