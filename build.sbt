@@ -23,9 +23,12 @@ libraryDependencies ++= Seq(
 ).map { "com.typesafe.akka" %% _ % akkaVersion } ++ Seq(
   "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
   "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
+  "com.github.dnvriend" %% "akka-persistence-inmemory" % "2.5.1.1",
   "io.circe" %% "circe-generic" % circeVersion,
   "org.iq80.leveldb" % "leveldb" % "0.7",
   "org.fusesource.leveldbjni" % "leveldbjni-all" % "1.8",
   "de.heikoseeberger" %% "akka-http-circe" % akkaJsonVersion,
   "org.scalatest" %% "scalatest" % "3.0.1" % Test
 )
+
+resolvers += Resolver.jcenterRepo

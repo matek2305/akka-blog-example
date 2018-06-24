@@ -2,9 +2,9 @@ package com.github.matek2305.djamoe
 
 import java.time.{LocalDateTime, Month}
 
-import akka.actor.ActorSystem
+import akka.actor.{ActorSystem, PoisonPill}
 import akka.testkit.{ImplicitSender, TestKit}
-import com.github.matek2305.djamoe.CompetitionAggregate.{CreateMatch, MatchCreated}
+import com.github.matek2305.djamoe.CompetitionAggregate.{CreateMatch, GetAllMatches, MatchCreated}
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
 /**
@@ -35,6 +35,12 @@ class CompetitionAggregateSpec
       competitionActor ! CreateMatch(matchDetails)
       val created = expectMsgType[MatchCreated]
       assert(created.details == matchDetails)
+
+      competitionActor ! PoisonPill
+
+      val restored = system.actorOf(CompetitionAggregate.props(competitionId))
+      restored ! GetAllMatches
+      expectMsg(List(matchDetails))
     }
   }
 
