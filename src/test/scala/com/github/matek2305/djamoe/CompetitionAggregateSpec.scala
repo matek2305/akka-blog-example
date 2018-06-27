@@ -1,10 +1,11 @@
 package com.github.matek2305.djamoe
 
 import java.time.{LocalDateTime, Month}
+import java.util.UUID
 
 import akka.actor.{ActorSystem, PoisonPill}
 import akka.testkit.{ImplicitSender, TestKit}
-import com.github.matek2305.djamoe.CompetitionAggregate.{CreateMatch, GetAllMatches, MatchCreated, MatchState}
+import com.github.matek2305.djamoe.CompetitionAggregate._
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
 /**
@@ -28,8 +29,10 @@ class CompetitionAggregateSpec
       LocalDateTime.of(2018, Month.JUNE, 24, 20, 0)
     )
 
+    val score = MatchScore(0, 3)
+
     "create match and preserve state after restart" in {
-      val competitionId = "c1"
+      val competitionId = UUID.randomUUID().toString
       val competitionActor = system.actorOf(CompetitionAggregate.props(competitionId))
 
       competitionActor ! CreateMatch(matchDetails)
@@ -41,6 +44,26 @@ class CompetitionAggregateSpec
       val restored = system.actorOf(CompetitionAggregate.props(competitionId))
       restored ! GetAllMatches
       expectMsg(List(MatchState(matchDetails)))
+    }
+
+    "finish match and preserve state after restart" in {
+      val competitionId = UUID.randomUUID().toString
+      val competitionActor = system.actorOf(CompetitionAggregate.props(competitionId))
+
+      competitionActor ! CreateMatch(matchDetails)
+      val created = expectMsgType[MatchCreated]
+
+      competitionActor ! FinishMatch(created.id, score)
+      val finished = expectMsgType[MatchFinished]
+
+      assert(finished.id == created.id)
+      assert(finished.score == score)
+
+      competitionActor ! PoisonPill
+
+      val restored = system.actorOf(CompetitionAggregate.props(competitionId))
+      restored ! GetAllMatches
+      expectMsg(List(MatchState(matchDetails, score)))
     }
   }
 

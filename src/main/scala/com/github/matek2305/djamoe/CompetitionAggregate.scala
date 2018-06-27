@@ -24,6 +24,9 @@ class CompetitionAggregate(id: String) extends PersistentActor with ActorLogging
     case CreateMatch(details) =>
       handleEvent(MatchCreated(MatchId(), details)) pipeTo sender()
       ()
+    case FinishMatch(id, score) =>
+      handleEvent(MatchFinished(id, score)) pipeTo sender()
+      ()
   }
 
   override def receiveRecover: Receive = {
