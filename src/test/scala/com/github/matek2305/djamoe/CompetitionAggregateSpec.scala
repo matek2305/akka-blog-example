@@ -101,6 +101,48 @@ class CompetitionAggregateSpec
       restored ! GetAllMatches
       expectMsg(List(MatchState(matchDetails, null, Map(newBet.who -> newBet.score))))
     }
+
+    "should return empty points map" in {
+      val competitionId = UUID.randomUUID().toString
+      val competitionActor = system.actorOf(CompetitionAggregate.props(competitionId))
+
+      competitionActor ! CreateMatch(matchDetails)
+      expectMsgType[MatchCreated]
+
+      competitionActor ! GetPoints
+      expectMsg(Map.empty)
+    }
+
+    "should calculate points after match finish" in {
+      val competitionId = UUID.randomUUID().toString
+      val competitionActor = system.actorOf(CompetitionAggregate.props(competitionId))
+
+      competitionActor ! CreateMatch(matchDetails)
+      val created = expectMsgType[MatchCreated]
+
+      val foo = Bet("Foo", MatchScore(0, 3))
+      competitionActor ! MakeBet(created.id, foo)
+      expectMsgType[BetMade]
+
+      val bar = Bet("Bar", MatchScore(1, 2))
+      competitionActor ! MakeBet(created.id, bar)
+      expectMsgType[BetMade]
+
+      val baz = Bet("Baz", MatchScore(2, 0))
+      competitionActor ! MakeBet(created.id, baz)
+      expectMsgType[BetMade]
+
+      val score = MatchScore(0 ,3)
+      competitionActor ! FinishMatch(created.id, score)
+      expectMsgType[MatchFinished]
+
+      competitionActor ! GetPoints
+      expectMsg(Map(
+        "Foo" -> 5,
+        "Bar" -> 2,
+        "Baz" -> 0
+      ))
+    }
   }
 
 }

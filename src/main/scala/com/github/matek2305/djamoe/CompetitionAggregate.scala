@@ -19,8 +19,8 @@ class CompetitionAggregate(id: String) extends PersistentActor with ActorLogging
   override def persistenceId: String = id
 
   override def receiveCommand: Receive = {
-    case GetAllMatches =>
-      sender() ! state()
+    case GetAllMatches => sender() ! state()
+    case GetPoints => sender() ! state.points
     case CreateMatch(details) =>
       handleEvent(MatchCreated(MatchId(), details)) pipeTo sender()
       ()
@@ -64,6 +64,7 @@ object CompetitionAggregate {
   final case class CreateMatch(details: Match) extends MatchCommand
   final case class FinishMatch(id: MatchId, score: MatchScore) extends MatchCommand
   final case class MakeBet(id: MatchId, bet: Bet) extends MatchCommand
+  final case class GetPoints() extends MatchCommand
 
   sealed trait MatchEvent {
     val id: MatchId
