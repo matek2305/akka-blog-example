@@ -73,27 +73,4 @@ object CompetitionAggregate {
   final case class MatchFinished(id: MatchId, score: MatchScore) extends MatchEvent
   final case class BetMade(id: MatchId, bet: Bet) extends MatchEvent
 
-  final case class CompetitionState(matches: Map[MatchId, MatchState]) {
-    def apply(): List[MatchState] = matches.values.toList
-    def add(id: MatchId, details: Match): CompetitionState =
-      CompetitionState(matches.updated(id, MatchState(details)))
-    def finishMatch(id: MatchId, score: MatchScore): CompetitionState =
-      CompetitionState(matches.updated(id, matches(id).finish(score)))
-    def addBet(id: MatchId, bet: Bet): CompetitionState =
-      CompetitionState(matches.updated(id, matches(id).addBet(bet)))
-  }
-
-  object CompetitionState {
-    def apply(): CompetitionState = CompetitionState(Map.empty)
-  }
-  
-  final case class MatchState(details: Match, score: MatchScore, bets: Map[String, MatchScore]) {
-    def finish(score: MatchScore): MatchState = copy(score = score)
-    def addBet(bet: Bet): MatchState = copy(bets = bets.updated(bet.who, bet.score))
-  }
-
-  object MatchState {
-    def apply(details: Match): MatchState = MatchState(details, null, Map.empty)
-  }
-
 }
