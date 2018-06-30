@@ -129,6 +129,13 @@ class CompetitionAggregateSpec
       competitionActor ! MakeBet(created.id, baz)
       expectMsgType[BetMade]
 
+      competitionActor ! GetPoints
+      expectMsg(Map(
+        "Foo" -> 0,
+        "Bar" -> 0,
+        "Baz" -> 0
+      ))
+
       val score = MatchScore(0 ,3)
       competitionActor ! FinishMatch(created.id, score)
       expectMsgType[MatchFinished]
