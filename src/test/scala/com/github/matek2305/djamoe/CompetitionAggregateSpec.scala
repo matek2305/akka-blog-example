@@ -8,9 +8,6 @@ import akka.testkit.{ImplicitSender, TestKit}
 import com.github.matek2305.djamoe.CompetitionAggregate._
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
-/**
-  * @author Mateusz Urbański <matek2305@gmail.com>.
-  */
 class CompetitionAggregateSpec
   extends TestKit(ActorSystem("testSystem"))
     with WordSpecLike
