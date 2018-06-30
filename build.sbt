@@ -6,7 +6,7 @@ version := "1.0"
 
 mainClass := Some("com.spr.blog.Main")
 
-scalaVersion := "2.12.2"
+scalaVersion := "2.12.6"
 
 scalacOptions ++= compilerFlags
 scalacOptions in(Compile, console) ~= filterExcludedReplOptions
