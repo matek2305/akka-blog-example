@@ -3,7 +3,7 @@ package com.github.matek2305.djamoe
 /**
   * @author Mateusz Urbański <matek2305@gmail.com>.
   */
-final case class CompetitionState(matches: Map[MatchId, MatchState], points: Map[String, Int]) {
+final case class CompetitionState(matches: Map[MatchId, MatchState]) {
   def apply(): List[MatchState] = matches.values.toList
   def add(id: MatchId, details: Match): CompetitionState =
     CompetitionState(matches.updated(id, MatchState(details)))
@@ -15,5 +15,4 @@ final case class CompetitionState(matches: Map[MatchId, MatchState], points: Map
 
 object CompetitionState {
   def apply(): CompetitionState = CompetitionState(Map.empty)
-  def apply(matches: Map[MatchId, MatchState]): CompetitionState = CompetitionState(matches, Map.empty)
 }

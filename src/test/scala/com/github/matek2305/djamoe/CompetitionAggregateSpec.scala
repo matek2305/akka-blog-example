@@ -78,7 +78,7 @@ class CompetitionAggregateSpec
 
       val restored = system.actorOf(CompetitionAggregate.props(competitionId))
       restored ! GetAllMatches
-      expectMsg(List(MatchState(matchDetails, null, Map(bet.who -> bet.score))))
+      expectMsg(List(MatchState(matchDetails, null, Map(bet.who -> BetState(bet.score)))))
     }
 
     "update bet and preserve state after" in {
@@ -99,7 +99,7 @@ class CompetitionAggregateSpec
 
       val restored = system.actorOf(CompetitionAggregate.props(competitionId))
       restored ! GetAllMatches
-      expectMsg(List(MatchState(matchDetails, null, Map(newBet.who -> newBet.score))))
+      expectMsg(List(MatchState(matchDetails, null, Map(newBet.who -> BetState(newBet.score)))))
     }
 
     "should return empty points map" in {
