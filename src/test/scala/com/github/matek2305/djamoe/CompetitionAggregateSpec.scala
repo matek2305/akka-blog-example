@@ -99,7 +99,7 @@ class CompetitionAggregateSpec
       expectMsg(List(MatchState(matchDetails, null, Map(newBet.who -> BetState(newBet.score)))))
     }
 
-    "should return empty points map" in {
+    "return empty points map" in {
       val competitionId = UUID.randomUUID().toString
       val competitionActor = system.actorOf(CompetitionAggregate.props(competitionId))
 
@@ -110,7 +110,7 @@ class CompetitionAggregateSpec
       expectMsg(Map.empty)
     }
 
-    "should calculate points after match finish" in {
+    "calculate points after match finish" in {
       val competitionId = UUID.randomUUID().toString
       val competitionActor = system.actorOf(CompetitionAggregate.props(competitionId))
 
@@ -146,6 +146,40 @@ class CompetitionAggregateSpec
         "Bar" -> 2,
         "Baz" -> 0
       ))
+    }
+
+    "sum points from match bets" in {
+      val competitionId = UUID.randomUUID().toString
+      val competitionActor = system.actorOf(CompetitionAggregate.props(competitionId))
+
+      val fraVsArg = Match("France", "Argentina", LocalDateTime.of(2018, Month.JUNE, 30, 16, 0))
+      competitionActor ! CreateMatch(fraVsArg)
+      val fraVsArgCreated = expectMsgType[MatchCreated]
+
+      competitionActor ! MakeBet(fraVsArgCreated.id, Bet("Foo", MatchScore(3, 1)))
+      expectMsgType[BetMade]
+
+      competitionActor ! GetPoints
+      expectMsg(Map("Foo" -> 0))
+
+      competitionActor ! FinishMatch(fraVsArgCreated.id, MatchScore(4, 3))
+      expectMsgType[MatchFinished]
+
+      competitionActor ! GetPoints
+      expectMsg(Map("Foo" -> 2))
+
+      val urgVsPor = Match("Urugway", "Portugal", LocalDateTime.of(2018, Month.JUNE, 30, 20, 0))
+      competitionActor ! CreateMatch(urgVsPor)
+      val urgVsPorCreated = expectMsgType[MatchCreated]
+
+      competitionActor ! MakeBet(urgVsPorCreated.id, Bet("Foo", MatchScore(2, 1)))
+      expectMsgType[BetMade]
+
+      competitionActor ! FinishMatch(urgVsPorCreated.id, MatchScore(2, 1))
+      expectMsgType[MatchFinished]
+
+      competitionActor ! GetPoints
+      expectMsg(Map("Foo" -> 7))
     }
   }
 
