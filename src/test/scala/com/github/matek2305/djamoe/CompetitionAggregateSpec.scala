@@ -204,6 +204,26 @@ class CompetitionAggregateSpec
       restored ! GetAllMatches
       expectMsg(List(MatchState(matchDetails, null, Map.empty, MatchState.LOCKED)))
     }
+
+    "prevent betting after match is locked" in {
+      val competitionId = UUID.randomUUID().toString
+      val competitionActor = system.actorOf(CompetitionAggregate.props(competitionId))
+
+      competitionActor ! CreateMatch(matchDetails)
+      val created = expectMsgType[MatchCreated]
+
+      competitionActor ! LockBetting(created.id)
+      expectMsg(BettingLocked(created.id))
+
+      competitionActor ! MakeBet(created.id, bet)
+      expectMsg(BettingAlreadyLocked(created.id))
+
+      competitionActor ! PoisonPill
+
+      val restored = system.actorOf(CompetitionAggregate.props(competitionId))
+      restored ! GetAllMatches
+      expectMsg(List(MatchState(matchDetails, null, Map.empty, MatchState.LOCKED)))
+    }
   }
 
 }

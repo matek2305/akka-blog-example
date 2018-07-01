@@ -6,9 +6,6 @@ import akka.persistence.{PersistentActor, RecoveryCompleted}
 
 import scala.concurrent.{Future, Promise}
 
-/**
-  * @author Mateusz Urbański <matek2305@gmail.com>.
-  */
 class CompetitionAggregate(id: String) extends PersistentActor with ActorLogging {
 
   import CompetitionAggregate._
@@ -28,8 +25,12 @@ class CompetitionAggregate(id: String) extends PersistentActor with ActorLogging
       handleEvent(MatchFinished(matchId, score)) pipeTo sender()
       ()
     case MakeBet(matchId, bet) =>
-      handleEvent(BetMade(matchId, bet)) pipeTo sender()
-      ()
+      if (state.matches(matchId).status == MatchState.LOCKED) {
+        sender() ! BettingAlreadyLocked(matchId)
+      } else {
+        handleEvent(BetMade(matchId, bet)) pipeTo sender()
+        ()
+      }
     case LockBetting(matchId) =>
       handleEvent(BettingLocked(matchId)) pipeTo sender()
       ()
@@ -79,5 +80,8 @@ object CompetitionAggregate {
   final case class MatchFinished(id: MatchId, score: MatchScore) extends MatchEvent
   final case class BetMade(id: MatchId, bet: Bet) extends MatchEvent
   final case class BettingLocked(id: MatchId) extends MatchEvent
+
+  final case class BettingAlreadyLocked(id: MatchId)
+    extends RuntimeException(s"Betting already locked for match with id=$id")
 
 }
