@@ -1,15 +1,18 @@
 package com.github.matek2305.djamoe
 
-final case class MatchState(details: Match, score: MatchScore, bets: Map[String, BetState]) {
+final case class MatchState(details: Match, score: MatchScore, bets: Map[String, BetState], status: MatchState.Value) {
 
   def finish(score: MatchScore): MatchState = copy(
     score = score,
     bets = bets map { case (who, bet) =>
       (who, BetState(bet.score, calculatePoints(bet.score, score)))
-    }
+    },
+    status = MatchState.FINISHED
   )
 
   def addBet(bet: Bet): MatchState = copy(bets = bets.updated(bet.who, BetState(bet.score)))
+
+  def lockBetting: MatchState = copy(status = MatchState.LOCKED)
 
   def extractPoints: Map[String, Int] = bets map { case (k, v) => k -> v.points }
 
@@ -36,6 +39,7 @@ final case class MatchState(details: Match, score: MatchScore, bets: Map[String,
   }
 }
 
-object MatchState {
-  def apply(details: Match): MatchState = MatchState(details, null, Map.empty)
+object MatchState extends Enumeration {
+  val CREATED, LOCKED, FINISHED = Value
+  def apply(details: Match): MatchState = MatchState(details, null, Map.empty, CREATED)
 }

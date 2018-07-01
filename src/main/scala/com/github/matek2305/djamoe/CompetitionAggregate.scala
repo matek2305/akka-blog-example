@@ -30,6 +30,9 @@ class CompetitionAggregate(id: String) extends PersistentActor with ActorLogging
     case MakeBet(matchId, bet) =>
       handleEvent(BetMade(matchId, bet)) pipeTo sender()
       ()
+    case LockBetting(matchId) =>
+      handleEvent(BettingLocked(matchId)) pipeTo sender()
+      ()
   }
 
   override def receiveRecover: Receive = {
@@ -51,6 +54,7 @@ class CompetitionAggregate(id: String) extends PersistentActor with ActorLogging
     case created: MatchCreated => state.add(created.id, created.details)
     case finished: MatchFinished => state.finishMatch(finished.id, finished.score)
     case bet: BetMade => state.addBet(bet.id, bet.bet)
+    case locked: BettingLocked => state.lockBetting(locked.id)
   }
 }
 
@@ -63,6 +67,7 @@ object CompetitionAggregate {
   final case class GetAllMatches() extends MatchCommand
   final case class CreateMatch(details: Match) extends MatchCommand
   final case class FinishMatch(id: MatchId, score: MatchScore) extends MatchCommand
+  final case class LockBetting(id: MatchId) extends MatchCommand
   final case class MakeBet(id: MatchId, bet: Bet) extends MatchCommand
   final case class GetPoints() extends MatchCommand
 
@@ -73,5 +78,6 @@ object CompetitionAggregate {
   final case class MatchCreated(id: MatchId, details: Match) extends MatchEvent
   final case class MatchFinished(id: MatchId, score: MatchScore) extends MatchEvent
   final case class BetMade(id: MatchId, bet: Bet) extends MatchEvent
+  final case class BettingLocked(id: MatchId) extends MatchEvent
 
 }

@@ -58,7 +58,7 @@ class CompetitionAggregateSpec
 
       val restored = system.actorOf(CompetitionAggregate.props(competitionId))
       restored ! GetAllMatches
-      expectMsg(List(MatchState(matchDetails, score, Map.empty)))
+      expectMsg(List(MatchState(matchDetails, score, Map.empty, MatchState.FINISHED)))
     }
 
     "add bet and preserve state after restart" in {
@@ -75,7 +75,7 @@ class CompetitionAggregateSpec
 
       val restored = system.actorOf(CompetitionAggregate.props(competitionId))
       restored ! GetAllMatches
-      expectMsg(List(MatchState(matchDetails, null, Map(bet.who -> BetState(bet.score)))))
+      expectMsg(List(MatchState(matchDetails, null, Map(bet.who -> BetState(bet.score)), MatchState.CREATED)))
     }
 
     "update bet and preserve state after" in {
@@ -96,7 +96,7 @@ class CompetitionAggregateSpec
 
       val restored = system.actorOf(CompetitionAggregate.props(competitionId))
       restored ! GetAllMatches
-      expectMsg(List(MatchState(matchDetails, null, Map(newBet.who -> BetState(newBet.score)))))
+      expectMsg(List(MatchState(matchDetails, null, Map(newBet.who -> BetState(newBet.score)), MatchState.CREATED)))
     }
 
     "return empty points map" in {
@@ -180,6 +180,29 @@ class CompetitionAggregateSpec
 
       competitionActor ! GetPoints
       expectMsg(Map("Foo" -> 7))
+    }
+
+    "lock betting and preserve state after restart" in {
+      val competitionId = UUID.randomUUID().toString
+      val competitionActor = system.actorOf(CompetitionAggregate.props(competitionId))
+
+      competitionActor ! CreateMatch(matchDetails)
+      val created = expectMsgType[MatchCreated]
+
+      competitionActor ! GetAllMatches
+      expectMsg(List(MatchState(matchDetails)))
+
+      competitionActor ! LockBetting(created.id)
+      expectMsg(BettingLocked(created.id))
+
+      competitionActor ! GetAllMatches
+      expectMsg(List(MatchState(matchDetails, null, Map.empty, MatchState.LOCKED)))
+
+      competitionActor ! PoisonPill
+
+      val restored = system.actorOf(CompetitionAggregate.props(competitionId))
+      restored ! GetAllMatches
+      expectMsg(List(MatchState(matchDetails, null, Map.empty, MatchState.LOCKED)))
     }
   }
 

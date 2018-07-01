@@ -17,6 +17,9 @@ final case class CompetitionState(matches: Map[MatchId, MatchState]) {
   def addBet(id: MatchId, bet: Bet): CompetitionState =
     CompetitionState(matches.updated(id, matches(id).addBet(bet)))
 
+  def lockBetting(id: MatchId): CompetitionState =
+    CompetitionState(matches.updated(id, matches(id).lockBetting))
+
 }
 
 object CompetitionState {
