@@ -1,11 +1,14 @@
 package com.github.matek2305.djamoe
 
+import java.time.{LocalDateTime, Month}
+import java.time.format.DateTimeFormatter
+
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.server.{Directives, Route}
 import akka.stream.ActorMaterializer
-import spray.json.{DefaultJsonProtocol, RootJsonFormat}
+import spray.json.{DefaultJsonProtocol, DeserializationException, JsString, JsValue, RootJsonFormat}
 
 // domain model
 final case class Item(name: String, id: Long)
@@ -13,6 +16,17 @@ final case class Order(items: List[Item])
 
 // collect your json format instances into a support trait:
 trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
+  implicit object LocalDateTimeJsonFormat extends RootJsonFormat[LocalDateTime] {
+
+    override def read(json: JsValue): LocalDateTime = json match {
+      case JsString(str) => LocalDateTime.parse(str, DateTimeFormatter.ISO_DATE_TIME)
+      case _ => throw DeserializationException("Expected ISO-8601 date time format")
+    }
+
+    override def write(localDateTime: LocalDateTime): JsValue =
+      JsString(localDateTime.format(DateTimeFormatter.ISO_DATE_TIME))
+  }
+  implicit val matchFormat: RootJsonFormat[Match] = jsonFormat3(Match)
   implicit val itemFormat: RootJsonFormat[Item] = jsonFormat2(Item)
   implicit val orderFormat: RootJsonFormat[Order] = jsonFormat1(Order) // contains List[Item]
 }
@@ -23,7 +37,11 @@ class MyJsonService extends Directives with JsonSupport {
   val route: Route =
     get {
       pathSingleSlash {
-        complete(Item("thing", 42)) // will render as JSON
+        complete(Match(
+          "Croatia",
+          "Denmark",
+          LocalDateTime.of(2018, Month.JULY, 1, 20, 0)
+        )) // will render as JSON
       }
     } ~
       post {
