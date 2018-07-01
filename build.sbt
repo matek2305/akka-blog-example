@@ -20,6 +20,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-persistence" % akkaVersion,
   "com.typesafe.akka" %% "akka-stream" % akkaVersion,
   "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
+  "com.typesafe.akka" %% "akka-http-spray-json" % "10.1.3",
   "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
   "com.github.dnvriend" %% "akka-persistence-inmemory" % "2.5.1.1",
   "io.circe" %% "circe-generic" % circeVersion,
