@@ -224,6 +224,26 @@ class CompetitionAggregateSpec
       restored ! GetAllMatches
       expectMsg(List(MatchState(matchDetails, null, Map.empty, MatchState.LOCKED)))
     }
+
+    "prevent betting after match is finished" in {
+      val competitionId = UUID.randomUUID().toString
+      val competitionActor = system.actorOf(CompetitionAggregate.props(competitionId))
+
+      competitionActor ! CreateMatch(matchDetails)
+      val created = expectMsgType[MatchCreated]
+
+      competitionActor ! FinishMatch(created.id, score)
+      expectMsg(MatchFinished(created.id, score))
+
+      competitionActor ! MakeBet(created.id, bet)
+      expectMsg(MatchHaveFinished(created.id))
+
+      competitionActor ! PoisonPill
+
+      val restored = system.actorOf(CompetitionAggregate.props(competitionId))
+      restored ! GetAllMatches
+      expectMsg(List(MatchState(matchDetails, score, Map.empty, MatchState.FINISHED)))
+    }
   }
 
 }

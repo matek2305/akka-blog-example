@@ -27,6 +27,8 @@ class CompetitionAggregate(id: String) extends PersistentActor with ActorLogging
     case MakeBet(matchId, bet) =>
       if (state.matches(matchId).status == MatchState.LOCKED) {
         sender() ! BettingAlreadyLocked(matchId)
+      } else if (state.matches(matchId).status == MatchState.FINISHED) {
+        sender() ! MatchHaveFinished(matchId)
       } else {
         handleEvent(BetMade(matchId, bet)) pipeTo sender()
         ()
@@ -83,5 +85,8 @@ object CompetitionAggregate {
 
   final case class BettingAlreadyLocked(id: MatchId)
     extends RuntimeException(s"Betting already locked for match with id=$id")
+
+  final case class MatchHaveFinished(id: MatchId)
+    extends RuntimeException(s"Match with id=$id have finished")
 
 }
