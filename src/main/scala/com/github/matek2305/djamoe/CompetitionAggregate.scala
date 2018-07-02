@@ -24,15 +24,13 @@ class CompetitionAggregate(id: String) extends PersistentActor with ActorLogging
     case FinishMatch(matchId, score) =>
       handleEvent(MatchFinished(matchId, score)) pipeTo sender()
       ()
-    case MakeBet(matchId, bet) =>
-      if (state.matches(matchId).status == MatchState.LOCKED) {
-        sender() ! BettingAlreadyLocked(matchId)
-      } else if (state.matches(matchId).status == MatchState.FINISHED) {
-        sender() ! MatchHaveFinished(matchId)
-      } else {
+    case MakeBet(matchId, bet) => state.matches(matchId).status match {
+      case MatchState.LOCKED => sender() ! BettingAlreadyLocked(matchId)
+      case MatchState.FINISHED => sender() ! MatchHaveFinished(matchId)
+      case MatchState.CREATED =>
         handleEvent(BetMade(matchId, bet)) pipeTo sender()
         ()
-      }
+    }
     case LockBetting(matchId) =>
       handleEvent(BettingLocked(matchId)) pipeTo sender()
       ()
