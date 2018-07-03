@@ -51,11 +51,11 @@ class CompetitionAggregate(id: String) extends PersistentActor with ActorLogging
     promise.future
   }
 
-  private def applyEvent(event: MatchEvent): CompetitionState = event match {
-    case created: MatchCreated => state.add(created.id, created.details)
-    case finished: MatchFinished => state.finishMatch(finished.id, finished.score)
-    case bet: BetMade => state.addBet(bet.id, bet.bet)
-    case locked: BettingLocked => state.lockBetting(locked.id)
+  private def applyEvent(event: MatchEvent): CompetitionState = {
+    case MatchCreated(matchId, details) => state.add(matchId, details)
+    case MatchFinished(matchId, score) => state.finishMatch(matchId, score)
+    case BetMade(matchId, bet) => state.addBet(matchId, bet)
+    case BettingLocked(matchId) => state.lockBetting(matchId)
   }
 }
 
