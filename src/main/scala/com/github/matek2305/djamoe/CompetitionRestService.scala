@@ -13,7 +13,7 @@ import scala.concurrent.duration._
 class CompetitionRestService(val system: ActorSystem) extends Directives with JsonSupport {
 
   private val competitionAggregate = system.actorOf(CompetitionAggregate.props("competition-id"))
-  private implicit val timeout: Timeout = Timeout(10.seconds)
+  private implicit val timeout: Timeout = Timeout(5.seconds)
 
   val route: Route =
     get {

@@ -40,7 +40,7 @@ class CompetitionAggregateSpec
       competitionActor ! PoisonPill
 
       val restored = system.actorOf(CompetitionAggregate.props(competitionId))
-      restored ! GetAllMatches
+      restored ! GetAllMatches()
       expectMsg(List(MatchState(matchDetails)))
     }
 
@@ -57,7 +57,7 @@ class CompetitionAggregateSpec
       competitionActor ! PoisonPill
 
       val restored = system.actorOf(CompetitionAggregate.props(competitionId))
-      restored ! GetAllMatches
+      restored ! GetAllMatches()
       expectMsg(List(MatchState(matchDetails, score, Map.empty, MatchState.FINISHED)))
     }
 
@@ -74,7 +74,7 @@ class CompetitionAggregateSpec
       competitionActor ! PoisonPill
 
       val restored = system.actorOf(CompetitionAggregate.props(competitionId))
-      restored ! GetAllMatches
+      restored ! GetAllMatches()
       expectMsg(List(MatchState(matchDetails, null, Map(bet.who -> BetState(bet.score)), MatchState.CREATED)))
     }
 
@@ -95,7 +95,7 @@ class CompetitionAggregateSpec
       competitionActor ! PoisonPill
 
       val restored = system.actorOf(CompetitionAggregate.props(competitionId))
-      restored ! GetAllMatches
+      restored ! GetAllMatches()
       expectMsg(List(MatchState(matchDetails, null, Map(newBet.who -> BetState(newBet.score)), MatchState.CREATED)))
     }
 
@@ -106,7 +106,7 @@ class CompetitionAggregateSpec
       competitionActor ! CreateMatch(matchDetails)
       expectMsgType[MatchCreated]
 
-      competitionActor ! GetPoints
+      competitionActor ! GetPoints()
       expectMsg(Map.empty)
     }
 
@@ -129,7 +129,7 @@ class CompetitionAggregateSpec
       competitionActor ! MakeBet(created.id, baz)
       expectMsgType[BetMade]
 
-      competitionActor ! GetPoints
+      competitionActor ! GetPoints()
       expectMsg(Map(
         "Foo" -> 0,
         "Bar" -> 0,
@@ -140,7 +140,7 @@ class CompetitionAggregateSpec
       competitionActor ! FinishMatch(created.id, score)
       expectMsgType[MatchFinished]
 
-      competitionActor ! GetPoints
+      competitionActor ! GetPoints()
       expectMsg(Map(
         "Foo" -> 5,
         "Bar" -> 2,
@@ -159,13 +159,13 @@ class CompetitionAggregateSpec
       competitionActor ! MakeBet(fraVsArgCreated.id, Bet("Foo", MatchScore(3, 1)))
       expectMsgType[BetMade]
 
-      competitionActor ! GetPoints
+      competitionActor ! GetPoints()
       expectMsg(Map("Foo" -> 0))
 
       competitionActor ! FinishMatch(fraVsArgCreated.id, MatchScore(4, 3))
       expectMsgType[MatchFinished]
 
-      competitionActor ! GetPoints
+      competitionActor ! GetPoints()
       expectMsg(Map("Foo" -> 2))
 
       val urgVsPor = Match("Urugway", "Portugal", LocalDateTime.of(2018, Month.JUNE, 30, 20, 0))
@@ -178,7 +178,7 @@ class CompetitionAggregateSpec
       competitionActor ! FinishMatch(urgVsPorCreated.id, MatchScore(2, 1))
       expectMsgType[MatchFinished]
 
-      competitionActor ! GetPoints
+      competitionActor ! GetPoints()
       expectMsg(Map("Foo" -> 7))
     }
 
@@ -189,19 +189,19 @@ class CompetitionAggregateSpec
       competitionActor ! CreateMatch(matchDetails)
       val created = expectMsgType[MatchCreated]
 
-      competitionActor ! GetAllMatches
+      competitionActor ! GetAllMatches()
       expectMsg(List(MatchState(matchDetails)))
 
       competitionActor ! LockBetting(created.id)
       expectMsg(BettingLocked(created.id))
 
-      competitionActor ! GetAllMatches
+      competitionActor ! GetAllMatches()
       expectMsg(List(MatchState(matchDetails, null, Map.empty, MatchState.LOCKED)))
 
       competitionActor ! PoisonPill
 
       val restored = system.actorOf(CompetitionAggregate.props(competitionId))
-      restored ! GetAllMatches
+      restored ! GetAllMatches()
       expectMsg(List(MatchState(matchDetails, null, Map.empty, MatchState.LOCKED)))
     }
 
@@ -221,7 +221,7 @@ class CompetitionAggregateSpec
       competitionActor ! PoisonPill
 
       val restored = system.actorOf(CompetitionAggregate.props(competitionId))
-      restored ! GetAllMatches
+      restored ! GetAllMatches()
       expectMsg(List(MatchState(matchDetails, null, Map.empty, MatchState.LOCKED)))
     }
 
@@ -241,7 +241,7 @@ class CompetitionAggregateSpec
       competitionActor ! PoisonPill
 
       val restored = system.actorOf(CompetitionAggregate.props(competitionId))
-      restored ! GetAllMatches
+      restored ! GetAllMatches()
       expectMsg(List(MatchState(matchDetails, score, Map.empty, MatchState.FINISHED)))
     }
   }

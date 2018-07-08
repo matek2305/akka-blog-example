@@ -16,8 +16,8 @@ class CompetitionAggregate(id: String) extends PersistentActor with ActorLogging
   override def persistenceId: String = id
 
   override def receiveCommand: Receive = {
-    case GetAllMatches => sender() ! state()
-    case GetPoints => sender() ! state.table
+    case GetAllMatches() => sender() ! state()
+    case GetPoints() => sender() ! state.table
     case CreateMatch(details) =>
       handleEvent(MatchCreated(MatchId(), details)) pipeTo sender()
       ()
