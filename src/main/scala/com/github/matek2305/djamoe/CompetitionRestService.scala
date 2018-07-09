@@ -46,3 +46,8 @@ class CompetitionRestService(val competitionAggregate: ActorRef) extends Directi
   private def getPoints: Future[Map[String, Int]] =
     (competitionAggregate ? GetPoints()).mapTo[Map[String, Int]]
 }
+
+object CompetitionRestService {
+  final case class ListResponse[T](data: List[T])
+  final case class PlayerPoints(playerName: String, points: Int)
+}
