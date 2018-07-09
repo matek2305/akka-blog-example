@@ -10,7 +10,8 @@ object WebServer {
     implicit val system: ActorSystem = ActorSystem()
     implicit val materializer: ActorMaterializer = ActorMaterializer()
 
-    val service = new CompetitionRestService(system)
+    val competitionAggregate = system.actorOf(CompetitionAggregate.props("competition-id"))
+    val service = new CompetitionRestService(competitionAggregate)
     Http().bindAndHandle(service.route, "localhost", 8080)
     println("Server online at http://localhost:8080/")
   }
