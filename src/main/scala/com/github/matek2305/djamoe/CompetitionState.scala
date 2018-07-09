@@ -6,7 +6,8 @@ final case class CompetitionState(matches: Map[MatchId, MatchState]) {
 
   def table: Map[String, Int] = matches.values
     .map(m => m.extractPoints)
-    .reduce((a, b) => CombinePointMaps.combine(a, b))
+    .reduceOption((a, b) => CombinePointMaps.combine(a, b))
+    .getOrElse(Map.empty)
 
   def add(id: MatchId, details: Match): CompetitionState =
     CompetitionState(matches.updated(id, MatchState(details)))

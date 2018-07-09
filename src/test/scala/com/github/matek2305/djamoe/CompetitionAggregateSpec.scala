@@ -110,6 +110,14 @@ class CompetitionAggregateSpec
       expectMsg(Map.empty)
     }
 
+    "return empty points map when no matches" in {
+      val competitionId = UUID.randomUUID().toString
+      val competitionActor = system.actorOf(CompetitionAggregate.props(competitionId))
+
+      competitionActor ! GetPoints()
+      expectMsg(Map.empty)
+    }
+
     "calculate points after match finish" in {
       val competitionId = UUID.randomUUID().toString
       val competitionActor = system.actorOf(CompetitionAggregate.props(competitionId))
