@@ -1,19 +1,19 @@
 package com.github.matek2305.djamoe
 
 import java.time.{LocalDateTime, Month}
+import java.util.UUID
 
 import akka.actor.ActorRef
-import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.model.{ContentTypes, HttpEntity, StatusCodes}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.{TestActor, TestProbe}
-import com.github.matek2305.djamoe.CompetitionAggregate.{GetAllMatches, GetPoints}
+import com.github.matek2305.djamoe.CompetitionAggregate.{CreateMatch, GetAllMatches, GetPoints, MatchCreated}
 import org.scalatest.{Matchers, WordSpec}
 import spray.json._
 
 class CompetitionRestServiceSpec extends WordSpec with Matchers with ScalatestRouteTest {
 
   "Competition rest service" should {
-
     val probe = TestProbe()
     val service = new CompetitionRestService(probe.ref)
 
@@ -44,7 +44,6 @@ class CompetitionRestServiceSpec extends WordSpec with Matchers with ScalatestRo
     }
 
     "return players points for GET requests to the /points path" in {
-
       probe.setAutoPilot((sender: ActorRef, _: Any) => {
         sender ! Map(
           "Foo" -> 5,
@@ -63,6 +62,50 @@ class CompetitionRestServiceSpec extends WordSpec with Matchers with ScalatestRo
           "Foo" -> JsNumber(5),
           "Bar" -> JsNumber(2),
           "Baz" -> JsNumber(0)
+        )
+      }
+    }
+
+    "create match in competition for POST requests to the /matches path" in {
+      val uuid = UUID.randomUUID()
+      probe.setAutoPilot((sender: ActorRef, _: Any) => {
+        sender ! MatchCreated(
+          MatchId(uuid),
+          Match(
+            "France",
+            "Belgium",
+            LocalDateTime.of(2018, Month.JULY, 10, 20, 0)
+          )
+        )
+        TestActor.KeepRunning
+      })
+
+      val content = JsObject(
+        "homeTeamName" -> JsString("France"),
+        "awayTeamName" -> JsString("Belgium"),
+        "startDate" -> JsString("2018-07-10T20:00:00")
+      ).toString()
+
+      Post("/matches", HttpEntity(ContentTypes.`application/json`, content)) ~> service.route ~> check {
+        probe.expectMsg(
+          CreateMatch(
+            Match(
+              "France",
+              "Belgium",
+              LocalDateTime.of(2018, Month.JULY, 10, 20, 0)
+            )
+          )
+        )
+
+        status shouldEqual StatusCodes.Created
+
+        responseAs[String].parseJson shouldEqual JsObject(
+          "id" -> JsString(uuid.toString),
+          "details" -> JsObject(
+            "homeTeamName" -> JsString("France"),
+            "awayTeamName" -> JsString("Belgium"),
+            "startDate" -> JsString("2018-07-10T20:00:00")
+          )
         )
       }
     }
