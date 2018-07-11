@@ -59,9 +59,20 @@ class CompetitionRestServiceSpec extends WordSpec with Matchers with ScalatestRo
         status shouldEqual StatusCodes.OK
 
         responseAs[String].parseJson shouldEqual JsObject(
-          "Foo" -> JsNumber(5),
-          "Bar" -> JsNumber(2),
-          "Baz" -> JsNumber(0)
+          "data" -> JsArray(
+            JsObject(
+              "playerName" -> JsString("Foo"),
+              "points" -> JsNumber(5)
+            ),
+            JsObject(
+              "playerName" -> JsString("Bar"),
+              "points" -> JsNumber(2)
+            ),
+            JsObject(
+              "playerName" -> JsString("Baz"),
+              "points" -> JsNumber(0)
+            )
+          )
         )
       }
     }
