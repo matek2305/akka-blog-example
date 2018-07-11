@@ -16,18 +16,12 @@ final case class MatchState(details: Match, score: MatchScore, bets: Map[String,
 
   def extractPoints: Map[String, Int] = bets map { case (k, v) => k -> v.points }
 
-  private def calculatePoints(bet: MatchScore, score: MatchScore): Int = {
-    if (bet == score) {
-      Points.EXACT_BET
-    } else if (bet.isDraw && score.isDraw) {
-      Points.DRAW
-    } else if (bet.homeTeamWin && score.homeTeamWin) {
-      Points.HOME_TEAM_WIN
-    } else if (bet.awayTeamWin && score.awayTeamWin) {
-      Points.AWAY_TEAM_WIN
-    } else {
-      Points.MISSED_BET
-    }
+  private def calculatePoints(bet: MatchScore, score: MatchScore): Int = (bet, score) match {
+    case (bet, score) if bet == score => Points.EXACT_BET
+    case (bet, score) if bet.isDraw && score.isDraw => Points.DRAW
+    case (bet, score) if bet.homeTeamWin && score.homeTeamWin => Points.HOME_TEAM_WIN
+    case (bet, score) if bet.awayTeamWin && score.awayTeamWin => Points.AWAY_TEAM_WIN
+    case _ => Points.MISSED_BET
   }
 
   private object Points {
