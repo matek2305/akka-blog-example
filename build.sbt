@@ -1,15 +1,10 @@
-import CompilerFlags._
-
-name := "akka-blog-microservice"
-organization := "com.spr"
+name := "djamoe-betting-engine"
+organization := "com.github.matek2305"
 version := "1.0"
 
-mainClass := Some("com.spr.blog.Main")
+mainClass := Some("com.github.matek2305.djamoe.WebServer")
 
 scalaVersion := "2.12.6"
-
-scalacOptions ++= compilerFlags
-scalacOptions in(Compile, console) ~= filterExcludedReplOptions
 
 lazy val akkaVersion = "2.5.2"
 lazy val akkaHttpVersion = "10.1.3"
