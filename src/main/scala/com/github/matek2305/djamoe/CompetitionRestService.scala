@@ -32,8 +32,12 @@ class CompetitionRestService(val competitionAggregate: ActorRef) extends Directi
     } ~
     path("points") {
       get {
-        onSuccess(getPoints) { points =>
-          complete((StatusCodes.OK, GetPointsResponse(toPlayerPoints(points))))
+        onSuccess(getPoints) { pointsMap =>
+          val points = pointsMap
+            .map { case (k, v) => PlayerPoints(k, v) }
+            .toList
+
+          complete((StatusCodes.OK, GetPointsResponse(points)))
         }
       }
     }
@@ -46,10 +50,6 @@ class CompetitionRestService(val competitionAggregate: ActorRef) extends Directi
 
   private def getPoints: Future[Map[String, Int]] =
     (competitionAggregate ? GetPoints()).mapTo[Map[String, Int]]
-
-  private def toPlayerPoints(points: Map[String, Int]): List[PlayerPoints] = {
-    points.map { case (k, v) => PlayerPoints(k, v) } toList
-  }
 }
 
 object CompetitionRestService {
