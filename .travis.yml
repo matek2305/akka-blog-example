@@ -3,4 +3,6 @@ jdk: oraclejdk8
 scala:
    - 2.12.6
 script:
-   - sbt ++$TRAVIS_SCALA_VERSION coverage test coverageReport
+   - sbt ++$TRAVIS_SCALA_VERSION coverage test
+   - sbt ++$TRAVIS_SCALA_VERSION coverageReport
+   - sbt ++$TRAVIS_SCALA_VERSION codacyCoverage
