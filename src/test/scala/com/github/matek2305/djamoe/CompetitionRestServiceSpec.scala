@@ -120,5 +120,13 @@ class CompetitionRestServiceSpec extends WordSpec with Matchers with ScalatestRo
         )
       }
     }
+
+    "return passed id for GET requests to the /matches/:id/bets path" in {
+      val id = 123
+      Get(s"/matches/$id/bets") ~> service.route ~> check {
+        status shouldEqual StatusCodes.OK
+        responseAs[String] should include (id.toString)
+      }
+    }
   }
 }

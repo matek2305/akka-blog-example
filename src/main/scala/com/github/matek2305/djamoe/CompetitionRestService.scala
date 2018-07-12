@@ -23,6 +23,9 @@ class CompetitionRestService(val competitionAggregate: ActorRef) extends Directi
             complete((StatusCodes.OK, matches.map(_.details)))
           }
         } ~
+          (get & pathPrefix(IntNumber / "bets")) { id =>
+            complete(s"bets for match with id=$id")
+          } ~
           (post & pathEndOrSingleSlash & entity(as[Match])) { details =>
             onSuccess(createMatch(details)) { created =>
               complete((StatusCodes.Created, created))
