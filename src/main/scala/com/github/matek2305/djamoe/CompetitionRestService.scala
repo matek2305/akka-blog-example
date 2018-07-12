@@ -15,32 +15,33 @@ class CompetitionRestService(val competitionAggregate: ActorRef) extends Directi
 
   private implicit val timeout: Timeout = Timeout(5.seconds)
 
-  val route: Route =
-    path("matches") {
-      get {
-        onSuccess(getMatches) { matches =>
-          complete((StatusCodes.OK, matches.map(_.details)))
-        }
+  val route: Route = {
+    logRequestResult("competition-api") {
+      pathPrefix("matches") {
+        (get & pathEndOrSingleSlash) {
+          onSuccess(getMatches) { matches =>
+            complete((StatusCodes.OK, matches.map(_.details)))
+          }
+        } ~
+          (post & pathEndOrSingleSlash & entity(as[Match])) { details =>
+            onSuccess(createMatch(details)) { created =>
+              complete((StatusCodes.Created, created))
+            }
+          }
       } ~
-      post {
-        entity(as[Match]) { matchDetails =>
-          onSuccess(createMatch(matchDetails)) { created =>
-            complete((StatusCodes.Created, created))
+        pathPrefix("points") {
+          (get & pathEndOrSingleSlash) {
+            onSuccess(getPoints) { pointsMap =>
+              val points = pointsMap
+                .map { case (k, v) => PlayerPoints(k, v) }
+                .toList
+
+              complete((StatusCodes.OK, GetPointsResponse(points)))
+            }
           }
         }
-      }
-    } ~
-    path("points") {
-      get {
-        onSuccess(getPoints) { pointsMap =>
-          val points = pointsMap
-            .map { case (k, v) => PlayerPoints(k, v) }
-            .toList
-
-          complete((StatusCodes.OK, GetPointsResponse(points)))
-        }
-      }
     }
+  }
 
   private def createMatch(matchDetails: Match): Future[MatchCreated] =
     (competitionAggregate ? CreateMatch(matchDetails)).mapTo[MatchCreated]
