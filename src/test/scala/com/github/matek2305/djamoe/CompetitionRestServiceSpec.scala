@@ -161,5 +161,40 @@ class CompetitionRestServiceSpec extends WordSpec with Matchers with ScalatestRo
         )
       }
     }
+
+    "finish match for POST requests to the /matches/:id/score path" in {
+      val uuid = UUID.randomUUID()
+      probe.setAutoPilot((sender: ActorRef, _: Any) => {
+        sender ! MatchFinished(
+          MatchId(uuid),
+          MatchScore(1, 1)
+        )
+        TestActor.KeepRunning
+      })
+
+      val content = JsObject(
+        "homeTeam" -> JsNumber(1),
+        "awayTeam" -> JsNumber(1)
+      ).toString()
+
+      Post(s"/matches/$uuid/score", HttpEntity(ContentTypes.`application/json`, content)) ~> service.route ~> check {
+        probe.expectMsg(
+          FinishMatch(
+            MatchId(uuid),
+            MatchScore(1, 1)
+          )
+        )
+
+        status shouldEqual StatusCodes.Created
+
+        responseAs[String].parseJson shouldEqual JsObject(
+          "id" -> JsString(uuid.toString),
+          "score" -> JsObject(
+            "homeTeam" -> JsNumber(1),
+            "awayTeam" -> JsNumber(1)
+          )
+        )
+      }
+    }
   }
 }

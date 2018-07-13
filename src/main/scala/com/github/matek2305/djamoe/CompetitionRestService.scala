@@ -33,6 +33,11 @@ class CompetitionRestService(val competitionAggregate: ActorRef) extends Directi
                 onSuccess(makeBet(id, bet)) { created =>
                   complete((StatusCodes.Created, created))
                 }
+              } ~
+              (pathPrefix(JavaUUID.map(MatchId(_)) / "score") & entity(as[MatchScore])) { (id, score) =>
+                onSuccess(finishMatch(id, score)) { created =>
+                  complete((StatusCodes.Created, created))
+                }
               }
           }
       } ~
@@ -49,6 +54,9 @@ class CompetitionRestService(val competitionAggregate: ActorRef) extends Directi
         }
     }
   }
+
+  private def finishMatch(id: MatchId, score: MatchScore): Future[MatchFinished] =
+    (competitionAggregate ? FinishMatch(id, score)).mapTo[MatchFinished]
 
   private def makeBet(id: MatchId, bet: Bet): Future[BetMade] =
     (competitionAggregate ? MakeBet(id, bet)).mapTo[BetMade]
