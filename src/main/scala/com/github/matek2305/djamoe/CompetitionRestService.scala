@@ -29,15 +29,17 @@ class CompetitionRestService(val competitionAggregate: ActorRef) extends Directi
                 complete((StatusCodes.Created, created))
               }
             } ~
-              (pathPrefix(JavaUUID.map(MatchId(_)) / "bets") & entity(as[Bet])) { (id, bet) =>
-                onSuccess(makeBet(id, bet)) { created =>
-                  complete((StatusCodes.Created, created))
-                }
-              } ~
-              (pathPrefix(JavaUUID.map(MatchId(_)) / "score") & entity(as[MatchScore])) { (id, score) =>
-                onSuccess(finishMatch(id, score)) { created =>
-                  complete((StatusCodes.Created, created))
-                }
+              pathPrefix(JavaUUID.map(MatchId(_))) { matchId =>
+                (pathPrefix("bets") & entity(as[Bet])) { bet =>
+                  onSuccess(makeBet(matchId, bet)) { created =>
+                    complete((StatusCodes.Created, created))
+                  }
+                } ~
+                  (pathPrefix("score") & entity(as[MatchScore])) { score =>
+                    onSuccess(finishMatch(matchId, score)) { created =>
+                      complete((StatusCodes.Created, created))
+                    }
+                  }
               }
           }
       } ~
