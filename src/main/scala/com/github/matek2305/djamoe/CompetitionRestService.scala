@@ -5,7 +5,7 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.{Directives, Route}
 import akka.pattern.ask
 import akka.util.Timeout
-import com.github.matek2305.djamoe.CompetitionAggregate.{CreateMatch, GetAllMatches, GetPoints, MatchCreated}
+import com.github.matek2305.djamoe.CompetitionAggregate._
 import com.github.matek2305.djamoe.CompetitionRestService.{GetPointsResponse, PlayerPoints}
 
 import scala.concurrent.Future
@@ -23,8 +23,10 @@ class CompetitionRestService(val competitionAggregate: ActorRef) extends Directi
             complete((StatusCodes.OK, matches.map(_.details)))
           }
         } ~
-          (get & pathPrefix(IntNumber / "bets")) { id =>
-            complete(s"bets for match with id=$id")
+          (post & pathPrefix(JavaUUID.map(MatchId(_)) / "bets") & entity(as[Bet])) { (id, bet) =>
+            onSuccess(makeBet(id, bet)) { created =>
+              complete((StatusCodes.Created, created))
+            }
           } ~
           (post & pathEndOrSingleSlash & entity(as[Match])) { details =>
             onSuccess(createMatch(details)) { created =>
@@ -46,6 +48,9 @@ class CompetitionRestService(val competitionAggregate: ActorRef) extends Directi
     }
   }
 
+  private def makeBet(id: MatchId, bet: Bet): Future[BetMade] =
+    (competitionAggregate ? MakeBet(id, bet)).mapTo[BetMade]
+
   private def createMatch(matchDetails: Match): Future[MatchCreated] =
     (competitionAggregate ? CreateMatch(matchDetails)).mapTo[MatchCreated]
 
@@ -57,6 +62,9 @@ class CompetitionRestService(val competitionAggregate: ActorRef) extends Directi
 }
 
 object CompetitionRestService {
+
   final case class GetPointsResponse(data: List[PlayerPoints])
+
   final case class PlayerPoints(playerName: String, points: Int)
+
 }

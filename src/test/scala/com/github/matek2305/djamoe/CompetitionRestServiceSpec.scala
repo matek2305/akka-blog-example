@@ -7,7 +7,7 @@ import akka.actor.ActorRef
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, StatusCodes}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.{TestActor, TestProbe}
-import com.github.matek2305.djamoe.CompetitionAggregate.{CreateMatch, GetAllMatches, GetPoints, MatchCreated}
+import com.github.matek2305.djamoe.CompetitionAggregate._
 import org.scalatest.{Matchers, WordSpec}
 import spray.json._
 
@@ -121,11 +121,44 @@ class CompetitionRestServiceSpec extends WordSpec with Matchers with ScalatestRo
       }
     }
 
-    "return passed id for GET requests to the /matches/:id/bets path" in {
-      val id = 123
-      Get(s"/matches/$id/bets") ~> service.route ~> check {
-        status shouldEqual StatusCodes.OK
-        responseAs[String] should include (id.toString)
+    "create bet for match for POST requests to the /matches/:id/bets path" in {
+      val uuid = UUID.randomUUID()
+      probe.setAutoPilot((sender: ActorRef, _: Any) => {
+        sender ! BetMade(
+          MatchId(uuid),
+          Bet("Foo", MatchScore(1, 2))
+        )
+        TestActor.KeepRunning
+      })
+
+      val content = JsObject(
+        "who" -> JsString("Foo"),
+        "score" -> JsObject(
+          "homeTeam" -> JsNumber(1),
+          "awayTeam" -> JsNumber(2)
+        )
+      ).toString()
+
+      Post(s"/matches/$uuid/bets", HttpEntity(ContentTypes.`application/json`, content)) ~> service.route ~> check {
+        probe.expectMsg(
+          MakeBet(
+            MatchId(uuid),
+            Bet("Foo", MatchScore(1, 2))
+          )
+        )
+
+        status shouldEqual StatusCodes.Created
+
+        responseAs[String].parseJson shouldEqual JsObject(
+          "id" -> JsString(uuid.toString),
+          "bet" -> JsObject(
+            "who" -> JsString("Foo"),
+            "score" -> JsObject(
+              "homeTeam" -> JsNumber(1),
+              "awayTeam" -> JsNumber(2)
+            )
+          )
+        )
       }
     }
   }
