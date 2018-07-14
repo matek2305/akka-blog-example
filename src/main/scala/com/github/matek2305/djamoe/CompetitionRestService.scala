@@ -6,7 +6,7 @@ import akka.http.scaladsl.server.{Directives, Route}
 import akka.pattern.ask
 import akka.util.Timeout
 import com.github.matek2305.djamoe.CompetitionAggregate._
-import com.github.matek2305.djamoe.CompetitionRestService.{GetPointsResponse, MatchResponse, PlayerPoints}
+import com.github.matek2305.djamoe.CompetitionRestService.{GetMatchesResponse, GetPointsResponse, MatchResponse, PlayerPoints}
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -24,7 +24,7 @@ class CompetitionRestService(val competitionAggregate: ActorRef) extends Directi
                 .map { case (k, v) => MatchResponse(k, v.details) }
                 .toList
 
-            complete((StatusCodes.OK, matches))
+            complete((StatusCodes.OK, GetMatchesResponse(matches)))
           }
         } ~
           post {
@@ -79,10 +79,9 @@ class CompetitionRestService(val competitionAggregate: ActorRef) extends Directi
 
 object CompetitionRestService {
 
-  final case class GetPointsResponse(data: List[PlayerPoints])
-
-  final case class PlayerPoints(playerName: String, points: Int)
-
+  final case class GetPointsResponse(players: List[PlayerPoints])
+  final case class GetMatchesResponse(matches: List[MatchResponse])
   final case class MatchResponse(id: MatchId, details: Match)
+  final case class PlayerPoints(name: String, points: Int)
 
 }

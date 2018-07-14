@@ -34,13 +34,15 @@ class CompetitionRestServiceSpec extends WordSpec with Matchers with ScalatestRo
 
         status shouldEqual StatusCodes.OK
 
-        responseAs[String].parseJson shouldEqual JsArray(
-          JsObject(
-            "id" -> JsString(matchId.toString),
-            "details" -> JsObject(
-              "homeTeamName" -> JsString("France"),
-              "awayTeamName" -> JsString("Belgium"),
-              "startDate" -> JsString("2018-07-10T20:00:00")
+        responseAs[String].parseJson shouldEqual JsObject(
+          "matches" -> JsArray(
+            JsObject(
+              "id" -> JsString(matchId.toString),
+              "details" -> JsObject(
+                "homeTeamName" -> JsString("France"),
+                "awayTeamName" -> JsString("Belgium"),
+                "startDate" -> JsString("2018-07-10T20:00:00")
+              )
             )
           )
         )
@@ -66,17 +68,17 @@ class CompetitionRestServiceSpec extends WordSpec with Matchers with ScalatestRo
         status shouldEqual StatusCodes.OK
 
         responseAs[String].parseJson shouldEqual JsObject(
-          "data" -> JsArray(
+          "players" -> JsArray(
             JsObject(
-              "playerName" -> JsString("Foo"),
+              "name" -> JsString("Foo"),
               "points" -> JsNumber(5)
             ),
             JsObject(
-              "playerName" -> JsString("Bar"),
+              "name" -> JsString("Bar"),
               "points" -> JsNumber(2)
             ),
             JsObject(
-              "playerName" -> JsString("Baz"),
+              "name" -> JsString("Baz"),
               "points" -> JsNumber(0)
             )
           )
