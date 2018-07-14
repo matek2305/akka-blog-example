@@ -2,7 +2,7 @@ package com.github.matek2305.djamoe
 
 final case class CompetitionState(matches: Map[MatchId, MatchState]) {
 
-  def apply(): List[MatchState] = matches.values.toList
+  def apply(): Map[MatchId, MatchState] = matches
 
   def table: Map[String, Int] = matches.values
     .map(m => m.extractPoints)

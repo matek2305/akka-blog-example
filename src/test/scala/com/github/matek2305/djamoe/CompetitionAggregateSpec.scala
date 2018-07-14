@@ -41,7 +41,7 @@ class CompetitionAggregateSpec
 
       val restored = system.actorOf(CompetitionAggregate.props(competitionId))
       restored ! GetAllMatches()
-      expectMsg(List(MatchState(matchDetails)))
+      expectMsg(Map(created.id -> MatchState(matchDetails)))
     }
 
     "finish match and preserve state after restart" in {
@@ -58,7 +58,7 @@ class CompetitionAggregateSpec
 
       val restored = system.actorOf(CompetitionAggregate.props(competitionId))
       restored ! GetAllMatches()
-      expectMsg(List(MatchState(matchDetails, score, Map.empty, MatchState.FINISHED)))
+      expectMsg(Map(created.id -> MatchState(matchDetails, score, Map.empty, MatchState.FINISHED)))
     }
 
     "add bet and preserve state after restart" in {
@@ -75,7 +75,7 @@ class CompetitionAggregateSpec
 
       val restored = system.actorOf(CompetitionAggregate.props(competitionId))
       restored ! GetAllMatches()
-      expectMsg(List(MatchState(matchDetails, null, Map(bet.who -> BetState(bet.score)), MatchState.CREATED)))
+      expectMsg(Map(created.id -> MatchState(matchDetails, null, Map(bet.who -> BetState(bet.score)), MatchState.CREATED)))
     }
 
     "update bet and preserve state after" in {
@@ -96,7 +96,7 @@ class CompetitionAggregateSpec
 
       val restored = system.actorOf(CompetitionAggregate.props(competitionId))
       restored ! GetAllMatches()
-      expectMsg(List(MatchState(matchDetails, null, Map(newBet.who -> BetState(newBet.score)), MatchState.CREATED)))
+      expectMsg(Map(created.id -> MatchState(matchDetails, null, Map(newBet.who -> BetState(newBet.score)), MatchState.CREATED)))
     }
 
     "return empty points map" in {
@@ -198,19 +198,19 @@ class CompetitionAggregateSpec
       val created = expectMsgType[MatchCreated]
 
       competitionActor ! GetAllMatches()
-      expectMsg(List(MatchState(matchDetails)))
+      expectMsg(Map(created.id -> MatchState(matchDetails)))
 
       competitionActor ! LockBetting(created.id)
       expectMsg(BettingLocked(created.id))
 
       competitionActor ! GetAllMatches()
-      expectMsg(List(MatchState(matchDetails, null, Map.empty, MatchState.LOCKED)))
+      expectMsg(Map(created.id -> MatchState(matchDetails, null, Map.empty, MatchState.LOCKED)))
 
       competitionActor ! PoisonPill
 
       val restored = system.actorOf(CompetitionAggregate.props(competitionId))
       restored ! GetAllMatches()
-      expectMsg(List(MatchState(matchDetails, null, Map.empty, MatchState.LOCKED)))
+      expectMsg(Map(created.id -> MatchState(matchDetails, null, Map.empty, MatchState.LOCKED)))
     }
 
     "prevent betting after match is locked" in {
@@ -230,7 +230,7 @@ class CompetitionAggregateSpec
 
       val restored = system.actorOf(CompetitionAggregate.props(competitionId))
       restored ! GetAllMatches()
-      expectMsg(List(MatchState(matchDetails, null, Map.empty, MatchState.LOCKED)))
+      expectMsg(Map(created.id -> MatchState(matchDetails, null, Map.empty, MatchState.LOCKED)))
     }
 
     "prevent betting after match is finished" in {
@@ -250,7 +250,7 @@ class CompetitionAggregateSpec
 
       val restored = system.actorOf(CompetitionAggregate.props(competitionId))
       restored ! GetAllMatches()
-      expectMsg(List(MatchState(matchDetails, score, Map.empty, MatchState.FINISHED)))
+      expectMsg(Map(created.id -> MatchState(matchDetails, score, Map.empty, MatchState.FINISHED)))
     }
   }
 

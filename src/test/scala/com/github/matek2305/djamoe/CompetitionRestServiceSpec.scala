@@ -1,7 +1,6 @@
 package com.github.matek2305.djamoe
 
 import java.time.{LocalDateTime, Month}
-import java.util.UUID
 
 import akka.actor.ActorRef
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, StatusCodes}
@@ -18,9 +17,10 @@ class CompetitionRestServiceSpec extends WordSpec with Matchers with ScalatestRo
       val probe = TestProbe()
       val service = new CompetitionRestService(probe.ref)
 
+      val matchId = MatchId()
       probe.setAutoPilot((sender: ActorRef, _: Any) => {
-        sender ! List(
-          MatchState(Match(
+        sender ! Map(
+          matchId -> MatchState(Match(
             "France",
             "Belgium",
             LocalDateTime.of(2018, Month.JULY, 10, 20, 0))
@@ -34,11 +34,16 @@ class CompetitionRestServiceSpec extends WordSpec with Matchers with ScalatestRo
 
         status shouldEqual StatusCodes.OK
 
-        responseAs[String].parseJson shouldEqual JsArray(JsObject(
-          "homeTeamName" -> JsString("France"),
-          "awayTeamName" -> JsString("Belgium"),
-          "startDate" -> JsString("2018-07-10T20:00:00")
-        ))
+        responseAs[String].parseJson shouldEqual JsArray(
+          JsObject(
+            "id" -> JsString(matchId.toString),
+            "details" -> JsObject(
+              "homeTeamName" -> JsString("France"),
+              "awayTeamName" -> JsString("Belgium"),
+              "startDate" -> JsString("2018-07-10T20:00:00")
+            )
+          )
+        )
       }
     }
 
@@ -83,10 +88,10 @@ class CompetitionRestServiceSpec extends WordSpec with Matchers with ScalatestRo
       val probe = TestProbe()
       val service = new CompetitionRestService(probe.ref)
 
-      val uuid = UUID.randomUUID()
+      val matchId = MatchId()
       probe.setAutoPilot((sender: ActorRef, _: Any) => {
         sender ! MatchCreated(
-          MatchId(uuid),
+          matchId,
           Match(
             "France",
             "Belgium",
@@ -116,7 +121,7 @@ class CompetitionRestServiceSpec extends WordSpec with Matchers with ScalatestRo
         status shouldEqual StatusCodes.Created
 
         responseAs[String].parseJson shouldEqual JsObject(
-          "id" -> JsString(uuid.toString),
+          "id" -> JsString(matchId.toString),
           "details" -> JsObject(
             "homeTeamName" -> JsString("France"),
             "awayTeamName" -> JsString("Belgium"),
@@ -130,12 +135,9 @@ class CompetitionRestServiceSpec extends WordSpec with Matchers with ScalatestRo
       val probe = TestProbe()
       val service = new CompetitionRestService(probe.ref)
 
-      val uuid = UUID.randomUUID()
+      val matchId = MatchId()
       probe.setAutoPilot((sender: ActorRef, _: Any) => {
-        sender ! BetMade(
-          MatchId(uuid),
-          Bet("Foo", MatchScore(1, 2))
-        )
+        sender ! BetMade(matchId, Bet("Foo", MatchScore(1, 2)))
         TestActor.KeepRunning
       })
 
@@ -147,18 +149,13 @@ class CompetitionRestServiceSpec extends WordSpec with Matchers with ScalatestRo
         )
       ).toString()
 
-      Post(s"/matches/$uuid/bets", HttpEntity(ContentTypes.`application/json`, content)) ~> service.route ~> check {
-        probe.expectMsg(
-          MakeBet(
-            MatchId(uuid),
-            Bet("Foo", MatchScore(1, 2))
-          )
-        )
+      Post(s"/matches/$matchId/bets", HttpEntity(ContentTypes.`application/json`, content)) ~> service.route ~> check {
+        probe.expectMsg(MakeBet(matchId, Bet("Foo", MatchScore(1, 2))))
 
         status shouldEqual StatusCodes.Created
 
         responseAs[String].parseJson shouldEqual JsObject(
-          "id" -> JsString(uuid.toString),
+          "id" -> JsString(matchId.toString),
           "bet" -> JsObject(
             "who" -> JsString("Foo"),
             "score" -> JsObject(
@@ -174,12 +171,9 @@ class CompetitionRestServiceSpec extends WordSpec with Matchers with ScalatestRo
       val probe = TestProbe()
       val service = new CompetitionRestService(probe.ref)
 
-      val uuid = UUID.randomUUID()
+      val matchId = MatchId()
       probe.setAutoPilot((sender: ActorRef, _: Any) => {
-        sender ! MatchFinished(
-          MatchId(uuid),
-          MatchScore(1, 1)
-        )
+        sender ! MatchFinished(matchId, MatchScore(1, 1))
         TestActor.KeepRunning
       })
 
@@ -188,18 +182,13 @@ class CompetitionRestServiceSpec extends WordSpec with Matchers with ScalatestRo
         "awayTeam" -> JsNumber(1)
       ).toString()
 
-      Post(s"/matches/$uuid/score", HttpEntity(ContentTypes.`application/json`, content)) ~> service.route ~> check {
-        probe.expectMsg(
-          FinishMatch(
-            MatchId(uuid),
-            MatchScore(1, 1)
-          )
-        )
+      Post(s"/matches/$matchId/score", HttpEntity(ContentTypes.`application/json`, content)) ~> service.route ~> check {
+        probe.expectMsg(FinishMatch(matchId, MatchScore(1, 1)))
 
         status shouldEqual StatusCodes.Created
 
         responseAs[String].parseJson shouldEqual JsObject(
-          "id" -> JsString(uuid.toString),
+          "id" -> JsString(matchId.toString),
           "score" -> JsObject(
             "homeTeam" -> JsNumber(1),
             "awayTeam" -> JsNumber(1)

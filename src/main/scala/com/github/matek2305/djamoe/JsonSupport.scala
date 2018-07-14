@@ -6,7 +6,7 @@ import java.util.UUID
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import com.github.matek2305.djamoe.CompetitionAggregate.{BetMade, MatchCreated, MatchFinished}
-import com.github.matek2305.djamoe.CompetitionRestService.{GetPointsResponse, PlayerPoints}
+import com.github.matek2305.djamoe.CompetitionRestService.{GetPointsResponse, MatchResponse, PlayerPoints}
 import spray.json.{DefaultJsonProtocol, DeserializationException, JsString, JsValue, RootJsonFormat}
 
 trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
@@ -41,4 +41,5 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
 
   implicit val playerPointsFormat: RootJsonFormat[PlayerPoints] = jsonFormat2(PlayerPoints)
   implicit val getPointsResponseFormat: RootJsonFormat[GetPointsResponse] = jsonFormat1(GetPointsResponse)
+  implicit val matchResponseForm: RootJsonFormat[MatchResponse] = jsonFormat2(MatchResponse)
 }
