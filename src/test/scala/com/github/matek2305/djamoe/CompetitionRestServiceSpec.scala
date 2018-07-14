@@ -14,10 +14,9 @@ import spray.json._
 class CompetitionRestServiceSpec extends WordSpec with Matchers with ScalatestRouteTest {
 
   "Competition rest service" should {
-    val probe = TestProbe()
-    val service = new CompetitionRestService(probe.ref)
-
     "return list of all matches for GET requests to the /matches path" in {
+      val probe = TestProbe()
+      val service = new CompetitionRestService(probe.ref)
 
       probe.setAutoPilot((sender: ActorRef, _: Any) => {
         sender ! List(
@@ -44,6 +43,9 @@ class CompetitionRestServiceSpec extends WordSpec with Matchers with ScalatestRo
     }
 
     "return players points for GET requests to the /points path" in {
+      val probe = TestProbe()
+      val service = new CompetitionRestService(probe.ref)
+
       probe.setAutoPilot((sender: ActorRef, _: Any) => {
         sender ! Map(
           "Foo" -> 5,
@@ -78,6 +80,9 @@ class CompetitionRestServiceSpec extends WordSpec with Matchers with ScalatestRo
     }
 
     "create match in competition for POST requests to the /matches path" in {
+      val probe = TestProbe()
+      val service = new CompetitionRestService(probe.ref)
+
       val uuid = UUID.randomUUID()
       probe.setAutoPilot((sender: ActorRef, _: Any) => {
         sender ! MatchCreated(
@@ -122,6 +127,9 @@ class CompetitionRestServiceSpec extends WordSpec with Matchers with ScalatestRo
     }
 
     "create bet for match for POST requests to the /matches/:id/bets path" in {
+      val probe = TestProbe()
+      val service = new CompetitionRestService(probe.ref)
+
       val uuid = UUID.randomUUID()
       probe.setAutoPilot((sender: ActorRef, _: Any) => {
         sender ! BetMade(
@@ -163,6 +171,9 @@ class CompetitionRestServiceSpec extends WordSpec with Matchers with ScalatestRo
     }
 
     "finish match for POST requests to the /matches/:id/score path" in {
+      val probe = TestProbe()
+      val service = new CompetitionRestService(probe.ref)
+
       val uuid = UUID.randomUUID()
       probe.setAutoPilot((sender: ActorRef, _: Any) => {
         sender ! MatchFinished(
