@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit
 import akka.actor.ActorRef
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.headers.RawHeader
-import akka.http.scaladsl.server.{Directives, Route}
+import akka.http.scaladsl.server.{Directive1, Directives, Route}
 import akka.pattern.ask
 import akka.util.Timeout
 import authentikat.jwt.{JsonWebToken, JwtClaimsSet, JwtHeader}
@@ -34,6 +34,9 @@ class CompetitionRestService(val competitionAggregate: ActorRef) extends Directi
           case LoginRequest(_, _) => complete(StatusCodes.Unauthorized)
         }
       } ~
+        (pathPrefix("secured") & get & pathEndOrSingleSlash & authenticated) { claims =>
+            complete(StatusCodes.OK, s"Secured content for ${claims.getOrElse("user", "")}")
+        } ~
         pathPrefix("matches") {
           (get & pathEndOrSingleSlash) {
             onSuccess(getMatches) { matchesMap =>
@@ -78,13 +81,6 @@ class CompetitionRestService(val competitionAggregate: ActorRef) extends Directi
     }
   }
 
-  private def setClaims(username: String) = JwtClaimsSet(
-    Map(
-      "user" -> username,
-      "expiredAt" -> (System.currentTimeMillis() + TimeUnit.DAYS.toMillis(tokenExpiryPeriodInDays))
-    )
-  )
-
   private def finishMatch(id: MatchId, score: MatchScore): Future[MatchFinished] =
     (competitionAggregate ? FinishMatch(id, score)).mapTo[MatchFinished]
 
@@ -99,6 +95,36 @@ class CompetitionRestService(val competitionAggregate: ActorRef) extends Directi
 
   private def getPoints: Future[Map[String, Int]] =
     (competitionAggregate ? GetPoints()).mapTo[Map[String, Int]]
+
+  private def setClaims(username: String) = JwtClaimsSet(
+    Map(
+      "user" -> username,
+      "expiredAt" -> (System.currentTimeMillis() + TimeUnit.DAYS.toMillis(tokenExpiryPeriodInDays))
+    )
+  )
+
+  private def authenticated: Directive1[Map[String, Any]] =
+    optionalHeaderValueByName("Authorization").flatMap {
+      case Some(jwt) if isTokenExpired(jwt) =>
+        complete(StatusCodes.Unauthorized -> "Token expired.")
+      case Some(jwt) if JsonWebToken.validate(jwt, secretKey) =>
+        provide(getClaims(jwt).getOrElse(Map.empty[String, Any]))
+      case _ => complete(StatusCodes.Unauthorized)
+    }
+
+  private def isTokenExpired(jwt: String) = getClaims(jwt) match {
+    case Some(claims) =>
+      claims.get("expiredAt") match {
+        case Some(value) => value.toLong < System.currentTimeMillis()
+        case None => false
+      }
+    case None => false
+  }
+
+  private def getClaims(jwt: String) = jwt match {
+    case JsonWebToken(_, claims, _) => claims.asSimpleMap.toOption
+    case _ => None
+  }
 }
 
 object CompetitionRestService {
