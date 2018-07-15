@@ -198,5 +198,34 @@ class CompetitionRestServiceSpec extends WordSpec with Matchers with ScalatestRo
         )
       }
     }
+
+    "return access token for POST requests with valid credentials to the /login path" in {
+      val probe = TestProbe()
+      val service = new CompetitionRestService(probe.ref)
+
+      val credentials = JsObject(
+        "username" -> JsString("admin"),
+        "password" -> JsString("admin")
+      ).toString()
+
+      Post("/login", HttpEntity(ContentTypes.`application/json`, credentials)) ~> service.route ~> check {
+        header("Access-Token") shouldBe defined
+        status shouldEqual StatusCodes.OK
+      }
+    }
+
+    "return Unauthorized for POST requests with invalid credentials to the /login path" in {
+      val probe = TestProbe()
+      val service = new CompetitionRestService(probe.ref)
+
+      val credentials = JsObject(
+        "username" -> JsString("invalid"),
+        "password" -> JsString("invalid")
+      ).toString()
+
+      Post("/login", HttpEntity(ContentTypes.`application/json`, credentials)) ~> service.route ~> check {
+        status shouldEqual StatusCodes.Unauthorized
+      }
+    }
   }
 }
