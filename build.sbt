@@ -18,6 +18,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion,
   "com.typesafe.akka" %% "akka-http-spray-json" % "10.1.3",
   "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
+  "com.jason-goodwin" %% "authentikat-jwt" % "0.4.5",
   "com.github.dnvriend" %% "akka-persistence-inmemory" % "2.5.1.1",
   "io.circe" %% "circe-generic" % circeVersion,
   "org.iq80.leveldb" % "leveldb" % "0.7",
