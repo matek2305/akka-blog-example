@@ -204,8 +204,8 @@ class CompetitionRestServiceSpec extends WordSpec with Matchers with ScalatestRo
       val service = new CompetitionRestService(probe.ref)
 
       val credentials = JsObject(
-        "username" -> JsString("admin"),
-        "password" -> JsString("admin")
+        "username" -> JsString("user1"),
+        "password" -> JsString("user1")
       ).toString()
 
       Post("/login", HttpEntity(ContentTypes.`application/json`, credentials)) ~> service.route ~> check {

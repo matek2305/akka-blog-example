@@ -11,6 +11,7 @@ import akka.util.Timeout
 import authentikat.jwt.{JsonWebToken, JwtClaimsSet, JwtHeader}
 import com.github.matek2305.djamoe.CompetitionAggregate._
 import com.github.matek2305.djamoe.CompetitionRestService._
+import org.mindrot.jbcrypt.BCrypt
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -23,15 +24,25 @@ class CompetitionRestService(val competitionAggregate: ActorRef) extends Directi
   private val secretKey = "super_secret_key"
   private val header = JwtHeader("HS256")
 
+  private val users = Map(
+    "user1" -> BCrypt.hashpw("user1", BCrypt.gensalt()),
+    "user2" -> BCrypt.hashpw("user2", BCrypt.gensalt()),
+    "user3" -> BCrypt.hashpw("user3", BCrypt.gensalt()),
+    "user4" -> BCrypt.hashpw("user4", BCrypt.gensalt()),
+    "user5" -> BCrypt.hashpw("user5", BCrypt.gensalt()),
+  )
+
   val route: Route = {
     logRequestResult("competition-api") {
       pathPrefix("login") {
-        (post & pathEndOrSingleSlash & entity(as[LoginRequest])) {
-          case lr@LoginRequest("admin", "admin") =>
-            respondWithHeader(RawHeader("Access-Token", JsonWebToken(header, setClaims(lr.username), secretKey))) {
+        (post & pathEndOrSingleSlash & entity(as[LoginRequest])) { request =>
+          if (users.contains(request.username) && BCrypt.checkpw(request.password, users(request.username))) {
+            respondWithHeader(RawHeader("Access-Token", JsonWebToken(header, setClaims(request.username), secretKey))) {
               complete(StatusCodes.OK)
             }
-          case LoginRequest(_, _) => complete(StatusCodes.Unauthorized)
+          } else {
+            complete(StatusCodes.Unauthorized -> "Invalid credentials")
+          }
         }
       } ~
         (pathPrefix("secured") & get & pathEndOrSingleSlash & authenticated) { claims =>
