@@ -55,24 +55,24 @@ class CompetitionRestService(val competitionAggregate: ActorRef) extends Directi
                 .map { case (k, v) => MatchResponse(k, v.details) }
                 .toList
 
-              complete((StatusCodes.OK, GetMatchesResponse(matches)))
+              complete(StatusCodes.OK -> GetMatchesResponse(matches))
             }
           } ~
             post {
               (pathEndOrSingleSlash & entity(as[Match])) { details =>
                 onSuccess(createMatch(details)) { created =>
-                  complete((StatusCodes.Created, created))
+                  complete(StatusCodes.Created -> created)
                 }
               } ~
                 pathPrefix(JavaUUID.map(MatchId(_))) { matchId =>
                   (pathPrefix("bets") & entity(as[Bet])) { bet =>
                     onSuccess(makeBet(matchId, bet)) { created =>
-                      complete((StatusCodes.Created, created))
+                      complete(StatusCodes.Created -> created)
                     }
                   } ~
                     (pathPrefix("score") & entity(as[MatchScore])) { score =>
                       onSuccess(finishMatch(matchId, score)) { created =>
-                        complete((StatusCodes.Created, created))
+                        complete(StatusCodes.Created -> created)
                       }
                     }
                 }
@@ -85,7 +85,7 @@ class CompetitionRestService(val competitionAggregate: ActorRef) extends Directi
                 .map { case (k, v) => PlayerPoints(k, v) }
                 .toList
 
-              complete((StatusCodes.OK, GetPointsResponse(points)))
+              complete(StatusCodes.OK -> GetPointsResponse(points))
             }
           }
         }
