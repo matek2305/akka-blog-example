@@ -2,12 +2,13 @@ package com.github.matek2305.djamoe
 
 import java.time.{LocalDateTime, Month}
 
-import akka.actor.{ActorRef, ActorSystem}
+import akka.actor.ActorSystem
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, StatusCodes}
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import akka.testkit.{TestActor, TestProbe}
+import akka.testkit.TestProbe
 import com.github.matek2305.djamoe.CompetitionAggregate._
+import com.github.matek2305.djamoe.CompetitionRestService.{GetMatchesResponse, GetPointsResponse, MatchResponse, PlayerPoints}
 import org.scalatest.concurrent.Eventually
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.{Matchers, WordSpec}
@@ -24,6 +25,7 @@ object CompetitionRestServiceSpec {
 
 class CompetitionRestServiceSpec extends WordSpec
   with ScalatestRouteTest
+  with JsonSupport
   with Matchers
   with Eventually {
 
@@ -48,16 +50,9 @@ class CompetitionRestServiceSpec extends WordSpec
           status shouldEqual StatusCodes.OK
         }
 
-        responseAs[String].parseJson shouldEqual JsObject(
-          "matches" -> JsArray(
-            JsObject(
-              "id" -> JsString(matchId.toString),
-              "details" -> JsObject(
-                "homeTeamName" -> JsString("France"),
-                "awayTeamName" -> JsString("Belgium"),
-                "startDate" -> JsString("2018-07-10T20:00:00")
-              )
-            )
+        responseAs[GetMatchesResponse] shouldEqual GetMatchesResponse(
+          List(
+            MatchResponse(matchId, Match("France", "Belgium", LocalDateTime.of(2018, Month.JULY, 10, 20, 0)))
           )
         )
       }
@@ -76,20 +71,11 @@ class CompetitionRestServiceSpec extends WordSpec
           status shouldEqual StatusCodes.OK
         }
 
-        responseAs[String].parseJson shouldEqual JsObject(
-          "players" -> JsArray(
-            JsObject(
-              "name" -> JsString("Foo"),
-              "points" -> JsNumber(5)
-            ),
-            JsObject(
-              "name" -> JsString("Bar"),
-              "points" -> JsNumber(2)
-            ),
-            JsObject(
-              "name" -> JsString("Baz"),
-              "points" -> JsNumber(0)
-            )
+        responseAs[GetPointsResponse] shouldEqual GetPointsResponse(
+          List(
+            PlayerPoints("Foo", 5),
+            PlayerPoints("Bar", 2),
+            PlayerPoints("Baz", 0)
           )
         )
       }
@@ -123,13 +109,9 @@ class CompetitionRestServiceSpec extends WordSpec
 
         eventually { status shouldEqual StatusCodes.Created }
 
-        responseAs[String].parseJson shouldEqual JsObject(
-          "id" -> JsString(matchId.toString),
-          "details" -> JsObject(
-            "homeTeamName" -> JsString("France"),
-            "awayTeamName" -> JsString("Belgium"),
-            "startDate" -> JsString("2018-07-10T20:00:00")
-          )
+        responseAs[MatchCreated] shouldEqual MatchCreated(
+          matchId,
+          Match("France", "Belgium", LocalDateTime.of(2018, Month.JULY, 10, 20, 0))
         )
       }
     }
@@ -150,16 +132,7 @@ class CompetitionRestServiceSpec extends WordSpec
 
         eventually { status shouldEqual StatusCodes.Created }
 
-        responseAs[String].parseJson shouldEqual JsObject(
-          "id" -> JsString(matchId.toString),
-          "bet" -> JsObject(
-            "who" -> JsString("Foo"),
-            "score" -> JsObject(
-              "homeTeam" -> JsNumber(1),
-              "awayTeam" -> JsNumber(2)
-            )
-          )
-        )
+        responseAs[BetMade] shouldEqual BetMade(matchId, Bet("Foo", MatchScore(1, 2)))
       }
     }
 
@@ -176,13 +149,7 @@ class CompetitionRestServiceSpec extends WordSpec
 
         eventually { status shouldEqual StatusCodes.Created }
 
-        responseAs[String].parseJson shouldEqual JsObject(
-          "id" -> JsString(matchId.toString),
-          "score" -> JsObject(
-            "homeTeam" -> JsNumber(1),
-            "awayTeam" -> JsNumber(1)
-          )
-        )
+        responseAs[MatchFinished] shouldEqual MatchFinished(matchId, MatchScore(1, 1))
       }
     }
 
