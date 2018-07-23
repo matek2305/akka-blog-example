@@ -61,8 +61,6 @@ class CompetitionAggregate(id: String) extends PersistentActor with ActorLogging
 
 object CompetitionAggregate {
 
-  def props(id: String) = Props(new CompetitionAggregate(id))
-
   sealed trait MatchCommand
 
   final case class GetAllMatches() extends MatchCommand
@@ -87,4 +85,5 @@ object CompetitionAggregate {
   final case class MatchHaveFinished(id: MatchId)
     extends RuntimeException(s"Match with id=$id have finished")
 
+  def props(id: String) = Props(new CompetitionAggregate(id))
 }
