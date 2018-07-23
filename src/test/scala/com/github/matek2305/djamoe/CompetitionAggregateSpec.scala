@@ -3,10 +3,19 @@ package com.github.matek2305.djamoe
 import java.time.{LocalDateTime, Month}
 import java.util.UUID
 
-import akka.actor.{ActorSystem, PoisonPill}
+import akka.actor.{ActorRef, ActorSystem, PoisonPill}
 import akka.testkit.{ImplicitSender, TestKit}
 import com.github.matek2305.djamoe.CompetitionAggregate._
+import com.github.matek2305.djamoe.CompetitionAggregateSpec.Test
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
+
+object CompetitionAggregateSpec {
+
+  abstract class Test(implicit val system: ActorSystem) {
+    protected val competitionId: String = UUID.randomUUID().toString
+    protected val competitionActor: ActorRef = system.actorOf(CompetitionAggregate.props(competitionId))
+  }
+}
 
 class CompetitionAggregateSpec
   extends TestKit(ActorSystem("testSystem"))
@@ -29,61 +38,49 @@ class CompetitionAggregateSpec
     val score = MatchScore(0, 3)
     val bet = Bet("Shady", MatchScore(2, 1))
 
-    "create match and preserve state after restart" in {
-      val competitionId = UUID.randomUUID().toString
-      val competitionActor = system.actorOf(CompetitionAggregate.props(competitionId))
-
+    "create match and preserve state after restart" in new Test {
       competitionActor ! CreateMatch(matchDetails)
-      val created = expectMsgType[MatchCreated]
+      val created: MatchCreated = expectMsgType[MatchCreated]
       assert(created.details == matchDetails)
 
       competitionActor ! PoisonPill
 
-      val restored = system.actorOf(CompetitionAggregate.props(competitionId))
+      val restored: ActorRef = system.actorOf(CompetitionAggregate.props(competitionId))
       restored ! GetAllMatches()
       expectMsg(Map(created.id -> MatchState(matchDetails)))
     }
 
-    "finish match and preserve state after restart" in {
-      val competitionId = UUID.randomUUID().toString
-      val competitionActor = system.actorOf(CompetitionAggregate.props(competitionId))
-
+    "finish match and preserve state after restart" in new Test {
       competitionActor ! CreateMatch(matchDetails)
-      val created = expectMsgType[MatchCreated]
+      val created: MatchCreated = expectMsgType[MatchCreated]
 
       competitionActor ! FinishMatch(created.id, score)
       expectMsg(MatchFinished(created.id, score))
 
       competitionActor ! PoisonPill
 
-      val restored = system.actorOf(CompetitionAggregate.props(competitionId))
+      val restored: ActorRef = system.actorOf(CompetitionAggregate.props(competitionId))
       restored ! GetAllMatches()
       expectMsg(Map(created.id -> MatchState(matchDetails, score, Map.empty, MatchState.FINISHED)))
     }
 
-    "add bet and preserve state after restart" in {
-      val competitionId = UUID.randomUUID().toString
-      val competitionActor = system.actorOf(CompetitionAggregate.props(competitionId))
-
+    "add bet and preserve state after restart" in new Test {
       competitionActor ! CreateMatch(matchDetails)
-      val created = expectMsgType[MatchCreated]
+      val created: MatchCreated = expectMsgType[MatchCreated]
 
       competitionActor ! MakeBet(created.id, bet)
       expectMsg(BetMade(created.id, bet))
 
       competitionActor ! PoisonPill
 
-      val restored = system.actorOf(CompetitionAggregate.props(competitionId))
+      val restored: ActorRef = system.actorOf(CompetitionAggregate.props(competitionId))
       restored ! GetAllMatches()
       expectMsg(Map(created.id -> MatchState(matchDetails, null, Map(bet.who -> BetState(bet.score)), MatchState.CREATED)))
     }
 
-    "update bet and preserve state after" in {
-      val competitionId = UUID.randomUUID().toString
-      val competitionActor = system.actorOf(CompetitionAggregate.props(competitionId))
-
+    "update bet and preserve state after" in new Test {
       competitionActor ! CreateMatch(matchDetails)
-      val created = expectMsgType[MatchCreated]
+      val created: MatchCreated = expectMsgType[MatchCreated]
 
       competitionActor ! MakeBet(created.id, bet)
       expectMsg(BetMade(created.id, bet))
@@ -94,15 +91,12 @@ class CompetitionAggregateSpec
 
       competitionActor ! PoisonPill
 
-      val restored = system.actorOf(CompetitionAggregate.props(competitionId))
+      val restored: ActorRef = system.actorOf(CompetitionAggregate.props(competitionId))
       restored ! GetAllMatches()
       expectMsg(Map(created.id -> MatchState(matchDetails, null, Map(newBet.who -> BetState(newBet.score)), MatchState.CREATED)))
     }
 
-    "return empty points map" in {
-      val competitionId = UUID.randomUUID().toString
-      val competitionActor = system.actorOf(CompetitionAggregate.props(competitionId))
-
+    "return empty points map" in new Test {
       competitionActor ! CreateMatch(matchDetails)
       expectMsgType[MatchCreated]
 
@@ -110,20 +104,14 @@ class CompetitionAggregateSpec
       expectMsg(Map.empty)
     }
 
-    "return empty points map when no matches" in {
-      val competitionId = UUID.randomUUID().toString
-      val competitionActor = system.actorOf(CompetitionAggregate.props(competitionId))
-
+    "return empty points map when no matches" in new Test {
       competitionActor ! GetPoints()
       expectMsg(Map.empty)
     }
 
-    "calculate points after match finish" in {
-      val competitionId = UUID.randomUUID().toString
-      val competitionActor = system.actorOf(CompetitionAggregate.props(competitionId))
-
+    "calculate points after match finish" in new Test {
       competitionActor ! CreateMatch(matchDetails)
-      val created = expectMsgType[MatchCreated]
+      val created: MatchCreated = expectMsgType[MatchCreated]
 
       val foo = Bet("Foo", MatchScore(0, 3))
       competitionActor ! MakeBet(created.id, foo)
@@ -156,13 +144,10 @@ class CompetitionAggregateSpec
       ))
     }
 
-    "sum points from match bets" in {
-      val competitionId = UUID.randomUUID().toString
-      val competitionActor = system.actorOf(CompetitionAggregate.props(competitionId))
-
+    "sum points from match bets" in new Test {
       val fraVsArg = Match("France", "Argentina", LocalDateTime.of(2018, Month.JUNE, 30, 16, 0))
       competitionActor ! CreateMatch(fraVsArg)
-      val fraVsArgCreated = expectMsgType[MatchCreated]
+      val fraVsArgCreated: MatchCreated = expectMsgType[MatchCreated]
 
       competitionActor ! MakeBet(fraVsArgCreated.id, Bet("Foo", MatchScore(3, 1)))
       expectMsgType[BetMade]
@@ -178,7 +163,7 @@ class CompetitionAggregateSpec
 
       val urgVsPor = Match("Urugway", "Portugal", LocalDateTime.of(2018, Month.JUNE, 30, 20, 0))
       competitionActor ! CreateMatch(urgVsPor)
-      val urgVsPorCreated = expectMsgType[MatchCreated]
+      val urgVsPorCreated: MatchCreated = expectMsgType[MatchCreated]
 
       competitionActor ! MakeBet(urgVsPorCreated.id, Bet("Foo", MatchScore(2, 1)))
       expectMsgType[BetMade]
@@ -190,12 +175,9 @@ class CompetitionAggregateSpec
       expectMsg(Map("Foo" -> 7))
     }
 
-    "lock betting and preserve state after restart" in {
-      val competitionId = UUID.randomUUID().toString
-      val competitionActor = system.actorOf(CompetitionAggregate.props(competitionId))
-
+    "lock betting and preserve state after restart" in new Test {
       competitionActor ! CreateMatch(matchDetails)
-      val created = expectMsgType[MatchCreated]
+      val created: MatchCreated = expectMsgType[MatchCreated]
 
       competitionActor ! GetAllMatches()
       expectMsg(Map(created.id -> MatchState(matchDetails)))
@@ -208,17 +190,14 @@ class CompetitionAggregateSpec
 
       competitionActor ! PoisonPill
 
-      val restored = system.actorOf(CompetitionAggregate.props(competitionId))
+      val restored: ActorRef = system.actorOf(CompetitionAggregate.props(competitionId))
       restored ! GetAllMatches()
       expectMsg(Map(created.id -> MatchState(matchDetails, null, Map.empty, MatchState.LOCKED)))
     }
 
-    "prevent betting after match is locked" in {
-      val competitionId = UUID.randomUUID().toString
-      val competitionActor = system.actorOf(CompetitionAggregate.props(competitionId))
-
+    "prevent betting after match is locked" in new Test {
       competitionActor ! CreateMatch(matchDetails)
-      val created = expectMsgType[MatchCreated]
+      val created: MatchCreated = expectMsgType[MatchCreated]
 
       competitionActor ! LockBetting(created.id)
       expectMsg(BettingLocked(created.id))
@@ -228,17 +207,14 @@ class CompetitionAggregateSpec
 
       competitionActor ! PoisonPill
 
-      val restored = system.actorOf(CompetitionAggregate.props(competitionId))
+      val restored: ActorRef = system.actorOf(CompetitionAggregate.props(competitionId))
       restored ! GetAllMatches()
       expectMsg(Map(created.id -> MatchState(matchDetails, null, Map.empty, MatchState.LOCKED)))
     }
 
-    "prevent betting after match is finished" in {
-      val competitionId = UUID.randomUUID().toString
-      val competitionActor = system.actorOf(CompetitionAggregate.props(competitionId))
-
+    "prevent betting after match is finished" in new Test {
       competitionActor ! CreateMatch(matchDetails)
-      val created = expectMsgType[MatchCreated]
+      val created: MatchCreated = expectMsgType[MatchCreated]
 
       competitionActor ! FinishMatch(created.id, score)
       expectMsg(MatchFinished(created.id, score))
@@ -248,7 +224,7 @@ class CompetitionAggregateSpec
 
       competitionActor ! PoisonPill
 
-      val restored = system.actorOf(CompetitionAggregate.props(competitionId))
+      val restored: ActorRef = system.actorOf(CompetitionAggregate.props(competitionId))
       restored ! GetAllMatches()
       expectMsg(Map(created.id -> MatchState(matchDetails, score, Map.empty, MatchState.FINISHED)))
     }
