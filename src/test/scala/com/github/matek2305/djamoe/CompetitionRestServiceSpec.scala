@@ -8,7 +8,7 @@ import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.TestProbe
 import com.github.matek2305.djamoe.CompetitionAggregate._
-import com.github.matek2305.djamoe.CompetitionRestService.{GetMatchesResponse, GetPointsResponse, MatchResponse, PlayerPoints}
+import com.github.matek2305.djamoe.CompetitionRestService._
 import org.scalatest.concurrent.Eventually
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.{Matchers, WordSpec}
@@ -20,7 +20,6 @@ object CompetitionRestServiceSpec {
     protected val competitionAggregate = TestProbe()
     protected val route: Route = new CompetitionRestService(competitionAggregate.ref).route
   }
-
 }
 
 class CompetitionRestServiceSpec extends WordSpec
@@ -32,8 +31,8 @@ class CompetitionRestServiceSpec extends WordSpec
   import CompetitionRestServiceSpec._
 
   implicit override val patienceConfig: PatienceConfig = PatienceConfig(
-    timeout = scaled(Span(2, Seconds)),
-    interval = scaled(Span(100, Millis))
+    timeout = scaled(Span(1, Seconds)),
+    interval = scaled(Span(50, Millis))
   )
 
   "Competition rest service" should {
@@ -42,18 +41,14 @@ class CompetitionRestServiceSpec extends WordSpec
         competitionAggregate.expectMsg(GetAllMatches())
 
         val matchId = MatchId()
-        competitionAggregate.reply(Map(
-          matchId -> MatchState(Match("France", "Belgium", LocalDateTime.of(2018, Month.JULY, 10, 20, 0)))
-        ))
+        val matchDetails = Match("France", "Belgium", LocalDateTime.of(2018, Month.JULY, 10, 20, 0))
 
-        eventually {
-          status shouldEqual StatusCodes.OK
-        }
+        competitionAggregate.reply(Map(matchId -> MatchState(matchDetails)))
+
+        eventually { status shouldEqual StatusCodes.OK }
 
         responseAs[GetMatchesResponse] shouldEqual GetMatchesResponse(
-          List(
-            MatchResponse(matchId, Match("France", "Belgium", LocalDateTime.of(2018, Month.JULY, 10, 20, 0)))
-          )
+          List(MatchResponse(matchId, matchDetails))
         )
       }
     }
@@ -67,9 +62,7 @@ class CompetitionRestServiceSpec extends WordSpec
           "Baz" -> 0
         ))
 
-        eventually {
-          status shouldEqual StatusCodes.OK
-        }
+        eventually { status shouldEqual StatusCodes.OK }
 
         responseAs[GetPointsResponse] shouldEqual GetPointsResponse(
           List(
@@ -82,82 +75,54 @@ class CompetitionRestServiceSpec extends WordSpec
     }
 
     "create match in competition for POST requests to the /matches path" in new Test {
-      val content: String = JsObject(
-        "homeTeamName" -> JsString("France"),
-        "awayTeamName" -> JsString("Belgium"),
-        "startDate" -> JsString("2018-07-10T20:00:00")
-      ).toString()
+      val matchDetails = Match("France", "Belgium", LocalDateTime.of(2018, Month.JULY, 10, 20, 0))
+      val content: String = matchDetails.toJson.toString()
 
       Post("/matches", HttpEntity(ContentTypes.`application/json`, content)) ~> route ~> check {
-        competitionAggregate.expectMsg(
-          CreateMatch(
-            Match(
-              "France",
-              "Belgium",
-              LocalDateTime.of(2018, Month.JULY, 10, 20, 0)
-            )
-          )
-        )
+        competitionAggregate.expectMsg(CreateMatch(matchDetails))
 
         val matchId = MatchId()
-        competitionAggregate.reply(
-          MatchCreated(
-            matchId,
-            Match("France", "Belgium", LocalDateTime.of(2018, Month.JULY, 10, 20, 0))
-          )
-        )
+        competitionAggregate.reply(MatchCreated(matchId, matchDetails))
 
         eventually { status shouldEqual StatusCodes.Created }
 
-        responseAs[MatchCreated] shouldEqual MatchCreated(
-          matchId,
-          Match("France", "Belgium", LocalDateTime.of(2018, Month.JULY, 10, 20, 0))
-        )
+        responseAs[MatchCreated] shouldEqual MatchCreated(matchId, matchDetails)
       }
     }
 
     "create bet for match for POST requests to the /matches/:id/bets path" in new Test {
       val matchId = MatchId()
-      val content: String = JsObject(
-        "who" -> JsString("Foo"),
-        "score" -> JsObject(
-          "homeTeam" -> JsNumber(1),
-          "awayTeam" -> JsNumber(2)
-        )
-      ).toString()
+      val bet = Bet("Foo", MatchScore(1, 2))
 
+      val content: String = bet.toJson.toString()
       Post(s"/matches/$matchId/bets", HttpEntity(ContentTypes.`application/json`, content)) ~> route ~> check {
-        competitionAggregate.expectMsg(MakeBet(matchId, Bet("Foo", MatchScore(1, 2))))
-        competitionAggregate.reply(BetMade(matchId, Bet("Foo", MatchScore(1, 2))))
+        competitionAggregate.expectMsg(MakeBet(matchId, bet))
+        competitionAggregate.reply(BetMade(matchId, bet))
 
         eventually { status shouldEqual StatusCodes.Created }
 
-        responseAs[BetMade] shouldEqual BetMade(matchId, Bet("Foo", MatchScore(1, 2)))
+        responseAs[BetMade] shouldEqual BetMade(matchId, bet)
       }
     }
 
     "finish match for POST requests to the /matches/:id/score path" in new Test {
       val matchId = MatchId()
-      val content: String = JsObject(
-        "homeTeam" -> JsNumber(1),
-        "awayTeam" -> JsNumber(1)
-      ).toString()
+      val score = MatchScore(1, 1)
+      val content: String = score.toJson.toString()
 
       Post(s"/matches/$matchId/score", HttpEntity(ContentTypes.`application/json`, content)) ~> route ~> check {
-        competitionAggregate.expectMsg(FinishMatch(matchId, MatchScore(1, 1)))
-        competitionAggregate.reply(MatchFinished(matchId, MatchScore(1, 1)))
+        competitionAggregate.expectMsg(FinishMatch(matchId, score))
+        competitionAggregate.reply(MatchFinished(matchId, score))
 
         eventually { status shouldEqual StatusCodes.Created }
 
-        responseAs[MatchFinished] shouldEqual MatchFinished(matchId, MatchScore(1, 1))
+        responseAs[MatchFinished] shouldEqual MatchFinished(matchId, score)
       }
     }
 
     "return access token for POST requests with valid credentials to the /login path" in new Test {
-      val credentials: String = JsObject(
-        "username" -> JsString("user1"),
-        "password" -> JsString("user1")
-      ).toString()
+      val loginRequest = LoginRequest("user1", "user1")
+      val credentials: String = loginRequest.toJson.toString()
 
       Post("/login", HttpEntity(ContentTypes.`application/json`, credentials)) ~> route ~> check {
         header("Access-Token") shouldBe defined
@@ -166,10 +131,8 @@ class CompetitionRestServiceSpec extends WordSpec
     }
 
     "return Unauthorized for POST requests with invalid credentials to the /login path" in new Test {
-      val credentials: String = JsObject(
-        "username" -> JsString("invalid"),
-        "password" -> JsString("invalid")
-      ).toString()
+      val loginRequest = LoginRequest("invalid", "invalid")
+      val credentials: String = loginRequest.toJson.toString()
 
       Post("/login", HttpEntity(ContentTypes.`application/json`, credentials)) ~> route ~> check {
         status shouldEqual StatusCodes.Unauthorized
