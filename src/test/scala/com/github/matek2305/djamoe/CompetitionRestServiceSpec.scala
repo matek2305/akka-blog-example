@@ -9,6 +9,7 @@ import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.TestProbe
 import com.github.matek2305.djamoe.CompetitionAggregate._
 import com.github.matek2305.djamoe.CompetitionRestService._
+import com.github.matek2305.djamoe.auth.AuthService.{AccessToken, GetAccessToken, InvalidCredentials}
 import org.scalatest.concurrent.Eventually
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.{Matchers, WordSpec}
@@ -18,7 +19,11 @@ object CompetitionRestServiceSpec {
 
   abstract class Test(implicit val system: ActorSystem) {
     protected val competitionAggregate = TestProbe()
-    protected val route: Route = new CompetitionRestService(competitionAggregate.ref).route
+    protected val authService = TestProbe()
+    protected val route: Route = new CompetitionRestService(
+      competitionAggregate.ref,
+      authService.ref
+    ).route
   }
 }
 
@@ -121,12 +126,16 @@ class CompetitionRestServiceSpec extends WordSpec
     }
 
     "return access token for POST requests with valid credentials to the /login path" in new Test {
-      val loginRequest = LoginRequest("user1", "user1")
+      val loginRequest = LoginRequest("admin", "admin")
       val credentials: String = loginRequest.toJson.toString()
 
       Post("/login", HttpEntity(ContentTypes.`application/json`, credentials)) ~> route ~> check {
-        header("Access-Token") shouldBe defined
-        status shouldEqual StatusCodes.OK
+        authService.expectMsg(GetAccessToken("admin", "admin"))
+        authService.reply(AccessToken("jwt"))
+
+        eventually { status shouldEqual StatusCodes.OK }
+
+        header("Access-Token").map(_.value()) shouldBe Some("jwt")
       }
     }
 
@@ -135,7 +144,10 @@ class CompetitionRestServiceSpec extends WordSpec
       val credentials: String = loginRequest.toJson.toString()
 
       Post("/login", HttpEntity(ContentTypes.`application/json`, credentials)) ~> route ~> check {
-        status shouldEqual StatusCodes.Unauthorized
+        authService.expectMsg(GetAccessToken("invalid", "invalid"))
+        authService.reply(InvalidCredentials())
+
+        eventually { status shouldEqual StatusCodes.Unauthorized }
       }
     }
   }

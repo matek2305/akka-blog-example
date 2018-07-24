@@ -1,47 +1,34 @@
 package com.github.matek2305.djamoe
 
-import java.util.concurrent.TimeUnit
-
 import akka.actor.ActorRef
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.server.{Directive1, Directives, Route}
 import akka.pattern.ask
 import akka.util.Timeout
-import authentikat.jwt.{JsonWebToken, JwtClaimsSet, JwtHeader}
 import com.github.matek2305.djamoe.CompetitionAggregate._
 import com.github.matek2305.djamoe.CompetitionRestService._
-import org.mindrot.jbcrypt.BCrypt
+import com.github.matek2305.djamoe.auth.AuthService._
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-class CompetitionRestService(val competitionAggregate: ActorRef) extends Directives with JsonSupport {
+class CompetitionRestService(
+  val competitionAggregate: ActorRef,
+  val authService: ActorRef
+) extends Directives with JsonSupport {
 
   private implicit val timeout: Timeout = Timeout(5.seconds)
-
-  private val tokenExpiryPeriodInDays = 1
-  private val secretKey = "super_secret_key"
-  private val header = JwtHeader("HS256")
-
-  private val users = Map(
-    "user1" -> BCrypt.hashpw("user1", BCrypt.gensalt()),
-    "user2" -> BCrypt.hashpw("user2", BCrypt.gensalt()),
-    "user3" -> BCrypt.hashpw("user3", BCrypt.gensalt()),
-    "user4" -> BCrypt.hashpw("user4", BCrypt.gensalt()),
-    "user5" -> BCrypt.hashpw("user5", BCrypt.gensalt()),
-  )
 
   val route: Route = {
     logRequestResult("competition-api") {
       pathPrefix("login") {
         (post & pathEndOrSingleSlash & entity(as[LoginRequest])) { request =>
-          if (users.contains(request.username) && BCrypt.checkpw(request.password, users(request.username))) {
-            respondWithHeader(RawHeader("Access-Token", JsonWebToken(header, setClaims(request.username), secretKey))) {
+          onSuccess(getAccessToken(request.username, request.password)) {
+            case AccessToken(jwt) => respondWithHeader(RawHeader("Access-Token", jwt)) {
               complete(StatusCodes.OK)
             }
-          } else {
-            complete(StatusCodes.Unauthorized -> "Invalid credentials")
+            case InvalidCredentials() => complete(StatusCodes.Unauthorized -> "Invalid credentials")
           }
         }
       } ~
@@ -92,6 +79,17 @@ class CompetitionRestService(val competitionAggregate: ActorRef) extends Directi
     }
   }
 
+  private def authenticated: Directive1[Map[String, Any]] =
+    optionalHeaderValueByName("Authorization").flatMap {
+      case Some(jwt) =>
+        onSuccess(validateAccessToken(jwt)).flatMap {
+          case ValidationFailed() => complete(StatusCodes.Unauthorized)
+          case TokenExpired() => complete(StatusCodes.Unauthorized -> "Token expired.")
+          case TokenIsValid(claims) => provide(claims)
+        }
+      case _ => complete(StatusCodes.Unauthorized)
+    }
+
   private def finishMatch(id: MatchId, score: MatchScore): Future[MatchFinished] =
     (competitionAggregate ? FinishMatch(id, score)).mapTo[MatchFinished]
 
@@ -107,35 +105,11 @@ class CompetitionRestService(val competitionAggregate: ActorRef) extends Directi
   private def getPoints: Future[Map[String, Int]] =
     (competitionAggregate ? GetPoints()).mapTo[Map[String, Int]]
 
-  private def setClaims(username: String) = JwtClaimsSet(
-    Map(
-      "user" -> username,
-      "expiredAt" -> (System.currentTimeMillis() + TimeUnit.DAYS.toMillis(tokenExpiryPeriodInDays))
-    )
-  )
+  private def getAccessToken(username: String, password: String): Future[GetAccessTokenResponse] =
+    (authService ? GetAccessToken(username, password)).mapTo[GetAccessTokenResponse]
 
-  private def authenticated: Directive1[Map[String, Any]] =
-    optionalHeaderValueByName("Authorization").flatMap {
-      case Some(jwt) if isTokenExpired(jwt) =>
-        complete(StatusCodes.Unauthorized -> "Token expired.")
-      case Some(jwt) if JsonWebToken.validate(jwt, secretKey) =>
-        provide(getClaims(jwt).getOrElse(Map.empty[String, Any]))
-      case _ => complete(StatusCodes.Unauthorized)
-    }
-
-  private def isTokenExpired(jwt: String) = getClaims(jwt) match {
-    case Some(claims) =>
-      claims.get("expiredAt") match {
-        case Some(value) => value.toLong < System.currentTimeMillis()
-        case None => false
-      }
-    case None => false
-  }
-
-  private def getClaims(jwt: String) = jwt match {
-    case JsonWebToken(_, claims, _) => claims.asSimpleMap.toOption
-    case _ => None
-  }
+  private def validateAccessToken(jwt: String): Future[ValidateAccessTokenResponse] =
+    (authService ? ValidateAccessToken(jwt)).mapTo[ValidateAccessTokenResponse]
 }
 
 object CompetitionRestService {
