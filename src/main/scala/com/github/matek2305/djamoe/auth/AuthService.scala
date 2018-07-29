@@ -5,13 +5,13 @@ import java.util.concurrent.TimeUnit
 import akka.actor.{Actor, Props}
 import authentikat.jwt.{JsonWebToken, JwtClaimsSet, JwtHeader}
 import com.github.matek2305.djamoe.auth.AuthService._
+import com.typesafe.config.ConfigFactory
 import org.mindrot.jbcrypt.BCrypt
 import org.mindrot.jbcrypt.BCrypt.{checkpw, hashpw}
 
 class AuthService extends Actor {
 
-  private val tokenExpiryPeriodInDays = 1
-  private val secretKey = "super_secret_key"
+  private val config = ConfigFactory.load()
   private val header = JwtHeader("HS256")
 
   private val users = Map(
@@ -24,7 +24,7 @@ class AuthService extends Actor {
 
   override def receive: Receive = {
     case GetAccessToken(username, password) if validCredentials(username, password) =>
-      sender() ! AccessToken(JsonWebToken(header, setClaims(username), secretKey))
+      sender() ! AccessToken(JsonWebToken(header, setClaims(username), config.getString("auth.jwt-secret")))
 
     case GetAccessToken(_, _) =>
       sender() ! InvalidCredentials()
@@ -32,7 +32,7 @@ class AuthService extends Actor {
     case ValidateAccessToken(jwt) if isTokenExpired(jwt) =>
       sender() ! TokenExpired()
 
-    case ValidateAccessToken(jwt) if JsonWebToken.validate(jwt, secretKey) =>
+    case ValidateAccessToken(jwt) if JsonWebToken.validate(jwt, config.getString("auth.jwt-secret")) =>
       sender() ! TokenIsValid(getClaims(jwt).getOrElse(Map.empty[String, Any]))
 
     case ValidateAccessToken(_) =>
@@ -61,7 +61,9 @@ class AuthService extends Actor {
   private def setClaims(username: String) = JwtClaimsSet(
     Map(
       "user" -> username,
-      "expiredAt" -> (System.currentTimeMillis() + TimeUnit.DAYS.toMillis(tokenExpiryPeriodInDays))
+      "expiredAt" -> (System.currentTimeMillis() + TimeUnit.DAYS.toMillis(
+        config.getInt("auth.token-expiry-period-in-days")
+      ))
     )
   )
 }
@@ -69,16 +71,23 @@ class AuthService extends Actor {
 object AuthService {
 
   sealed trait Request
+
   final case class GetAccessToken(username: String, password: String)
+
   final case class ValidateAccessToken(jwt: String)
 
   sealed trait GetAccessTokenResponse
+
   final case class AccessToken(token: String) extends GetAccessTokenResponse
+
   final case class InvalidCredentials() extends GetAccessTokenResponse
 
   sealed trait ValidateAccessTokenResponse
+
   final case class TokenIsValid(claims: Map[String, Any]) extends ValidateAccessTokenResponse
+
   final case class TokenExpired() extends ValidateAccessTokenResponse
+
   final case class ValidationFailed() extends ValidateAccessTokenResponse
 
   def props() = Props(new AuthService)
