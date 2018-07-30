@@ -53,7 +53,7 @@ class CompetitionRestServiceSpec extends WordSpec
         eventually { status shouldEqual StatusCodes.OK }
 
         responseAs[GetMatchesResponse] shouldEqual GetMatchesResponse(
-          List(MatchResponse(matchId, matchDetails))
+          List(MatchResponse(matchId, "CREATED", matchDetails))
         )
       }
     }

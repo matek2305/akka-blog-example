@@ -39,7 +39,7 @@ class CompetitionRestService(
           (get & pathEndOrSingleSlash) {
             onSuccess(getMatches) { matchesMap =>
               val matches = matchesMap
-                .map { case (k, v) => MatchResponse(k, v.details) }
+                .map { case (k, v) => MatchResponse(k, v.status.toString, v.details) }
                 .toList
 
               complete(StatusCodes.OK -> GetMatchesResponse(matches))
@@ -120,7 +120,7 @@ object CompetitionRestService {
 
   final case class GetMatchesResponse(matches: List[MatchResponse])
 
-  final case class MatchResponse(id: MatchId, details: Match)
+  final case class MatchResponse(id: MatchId, status: String, details: Match)
 
   final case class PlayerPoints(name: String, points: Int)
 

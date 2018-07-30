@@ -1,6 +1,6 @@
 package com.github.matek2305.djamoe
 
-final case class MatchState(details: Match, score: MatchScore, bets: Map[String, BetState], status: MatchState.Value) {
+final case class MatchState(details: Match, score: MatchScore, bets: Map[String, BetState], status: MatchState.Status) {
 
   def finish(score: MatchScore): MatchState = copy(
     score = score,
@@ -34,6 +34,7 @@ final case class MatchState(details: Match, score: MatchScore, bets: Map[String,
 }
 
 object MatchState extends Enumeration {
+  type Status = Value
   val CREATED, LOCKED, FINISHED = Value
   def apply(details: Match): MatchState = MatchState(details, null, Map.empty, CREATED)
 }
