@@ -57,7 +57,7 @@ class CompetitionRestService(
                       complete(StatusCodes.Created -> created)
                     }
                   } ~
-                    (pathPrefix("score") & entity(as[MatchScore])) { score =>
+                    (pathPrefix("results") & entity(as[MatchScore])) { score =>
                       onSuccess(finishMatch(matchId, score)) { created =>
                         complete(StatusCodes.Created -> created)
                       }

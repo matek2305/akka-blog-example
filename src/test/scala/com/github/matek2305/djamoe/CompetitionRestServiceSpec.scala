@@ -110,12 +110,12 @@ class CompetitionRestServiceSpec extends WordSpec
       }
     }
 
-    "finish match for POST requests to the /matches/:id/score path" in new Test {
+    "finish match for POST requests to the /matches/:id/results path" in new Test {
       val matchId = MatchId()
       val score = MatchScore(1, 1)
       val content: String = score.toJson.toString()
 
-      Post(s"/matches/$matchId/score", HttpEntity(ContentTypes.`application/json`, content)) ~> route ~> check {
+      Post(s"/matches/$matchId/results", HttpEntity(ContentTypes.`application/json`, content)) ~> route ~> check {
         competitionAggregate.expectMsg(FinishMatch(matchId, score))
         competitionAggregate.reply(MatchFinished(matchId, score))
 
