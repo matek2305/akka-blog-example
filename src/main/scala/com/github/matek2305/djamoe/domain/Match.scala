@@ -13,6 +13,10 @@ final case class Match(
   bets: Map[String, Bet] = Map.empty
 ) {
 
+  def getPointsMap(): Map[String, Int] = {
+    bets map { case (k, v) => k -> v.points }
+  }
+
   def addBet(who: String, bet: Score): Match = copy(bets = bets.updated(who, Bet(bet)))
 
   def lockBetting(): Match = copy(status = Match.LOCKED)
