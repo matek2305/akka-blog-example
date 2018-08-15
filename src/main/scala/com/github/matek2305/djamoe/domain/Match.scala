@@ -2,41 +2,52 @@ package com.github.matek2305.djamoe.domain
 
 import java.time.LocalDateTime
 
-final case class Match(homeTeamName: String, awayTeamName: String, startDate: LocalDateTime, result: Score, bets: Map[String, Score]) {
+import com.github.matek2305.djamoe.domain.CompetitionEvent.MatchAdded
 
-//  def finish(score: MatchScore): MatchState = copy(
-//    score = score,
-//    bets = bets map { case (who, bet) =>
-//      (who, BetState(bet.score, calculatePoints(bet.score, score)))
-//    },
-//    status = MatchState.FINISHED
-//  )
-//
-//  def addBet(bet: Bet): MatchState = copy(bets = bets.updated(bet.who, BetState(bet.score)))
-//
-//  def lockBetting: MatchState = copy(status = MatchState.LOCKED)
-//
-//  def extractPoints: Map[String, Int] = bets map { case (k, v) => k -> v.points }
-//
-//  private def calculatePoints(bet: MatchScore, score: MatchScore): Int = (bet, score) match {
-//    case (bet, score) if bet == score => Points.EXACT_BET
-//    case (bet, score) if bet.isDraw && score.isDraw => Points.DRAW
-//    case (bet, score) if bet.homeTeamWin && score.homeTeamWin => Points.HOME_TEAM_WIN
-//    case (bet, score) if bet.awayTeamWin && score.awayTeamWin => Points.AWAY_TEAM_WIN
-//    case _ => Points.MISSED_BET
-//  }
-//
-//  private object Points {
-//    val EXACT_BET = 5
-//    val DRAW = 2
-//    val HOME_TEAM_WIN = 2
-//    val AWAY_TEAM_WIN = 2
-//    val MISSED_BET = 0
-//  }
+final case class Match(
+  homeTeamName: String,
+  awayTeamName: String,
+  startDate: LocalDateTime,
+  status: Match.Status = Match.CREATED,
+  result: Score = null,
+  bets: Map[String, Bet] = Map.empty
+) {
+
+  def addBet(who: String, bet: Score): Match = copy(bets = bets.updated(who, Bet(bet)))
+
+  def lockBetting(): Match = copy(status = Match.LOCKED)
+
+  def finish(result: Score): Match = copy(
+    result = result,
+    status = Match.FINISHED,
+    bets = bets map {
+      case (who, bet) => (who, bet.copy(points = calculatePoints(bet.score, result)))
+    }
+  )
+
+  private def calculatePoints(bet: Score, score: Score): Int = (bet, score) match {
+    case (bet, score) if bet == score => Points.EXACT_BET
+    case (bet, score) if bet.isDraw && score.isDraw => Points.DRAW
+    case (bet, score) if bet.homeTeamWin && score.homeTeamWin => Points.HOME_TEAM_WIN
+    case (bet, score) if bet.awayTeamWin && score.awayTeamWin => Points.AWAY_TEAM_WIN
+    case _ => Points.MISSED_BET
+  }
+
+  private object Points {
+    val EXACT_BET = 5
+    val DRAW = 2
+    val HOME_TEAM_WIN = 2
+    val AWAY_TEAM_WIN = 2
+    val MISSED_BET = 0
+  }
 }
 
-//object Match {
-//  def from()
-//}
+object Match extends Enumeration {
+  type Status = Value
+  val CREATED, LOCKED, FINISHED = Value
+  def from(matchAdded: MatchAdded): Match = {
+    Match(matchAdded.homeTeamName, matchAdded.awayTeamName, matchAdded.startDate)
+  }
+}
 
 
