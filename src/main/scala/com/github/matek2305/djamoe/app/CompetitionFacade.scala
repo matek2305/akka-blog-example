@@ -34,5 +34,4 @@ trait CompetitionFacade {
   def makeBet(makeBet: MakeBet): Future[BetMade] = {
     (competitionActor ? makeBet).mapTo[BetMade]
   }
-
 }
