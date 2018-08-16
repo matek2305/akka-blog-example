@@ -8,11 +8,7 @@ import scala.util.{Failure, Success, Try}
 
 final case class Competition(matches: Map[MatchId, Match]) {
 
-  def getMatches(): List[Match] = {
-    matches.values.toList
-  }
-
-  def getPointsMap(): Map[String, Int] = {
+  def pointsMap: Map[String, Int] = {
     matches.values
       .map(m => m.getPointsMap())
       .reduceOption((a, b) => CombinePointMaps.combine(a, b))

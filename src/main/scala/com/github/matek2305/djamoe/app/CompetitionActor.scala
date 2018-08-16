@@ -16,8 +16,8 @@ class CompetitionActor(id: String) extends PersistentActor with DiagnosticActorL
 
   override def receiveCommand: Receive = {
     case command: CompetitionCommand => process(sender(), command)
-    case GetAllMatches() => sender() ! competition.getMatches()
-    case GetPoints() => sender() ! competition.getPointsMap()
+    case GetAllMatches => sender() ! competition.matches
+    case GetPoints => sender() ! competition.pointsMap
   }
 
   override def receiveRecover: Receive = {
