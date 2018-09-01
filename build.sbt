@@ -24,7 +24,8 @@ libraryDependencies ++= Seq(
   "org.iq80.leveldb" % "leveldb" % "0.7",
   "org.fusesource.leveldbjni" % "leveldbjni-all" % "1.8",
   "org.scalatest" %% "scalatest" % "3.0.1" % Test,
-  "org.mindrot" % "jbcrypt" % "0.4"
+  "org.mindrot" % "jbcrypt" % "0.4",
+  "com.tngtech.archunit" % "archunit" % "0.9.1" % Test
 )
 
 resolvers += Resolver.jcenterRepo
