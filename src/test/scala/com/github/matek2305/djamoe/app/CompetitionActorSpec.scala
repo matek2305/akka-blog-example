@@ -8,8 +8,8 @@ import akka.testkit.{ImplicitSender, TestKit}
 import com.github.matek2305.djamoe.app.CompetitionActorQuery.GetAllMatches
 import com.github.matek2305.djamoe.app.CompetitionActorResponse.CommandProcessed
 import com.github.matek2305.djamoe.app.CompetitionActorSpec.Test
-import com.github.matek2305.djamoe.domain.CompetitionCommand.{AddMatch, MakeBet}
-import com.github.matek2305.djamoe.domain.CompetitionEvent.BetMade
+import com.github.matek2305.djamoe.domain.CompetitionCommand.{AddMatch, FinishMatch, MakeBet}
+import com.github.matek2305.djamoe.domain.CompetitionEvent.{BetMade, MatchFinished}
 import com.github.matek2305.djamoe.domain.{Bet, Match, MatchId, Score}
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
@@ -110,6 +110,28 @@ class CompetitionActorSpec
             "Foo" -> Bet(Score(2, 1)),
             "Bar" -> Bet(Score(1, 1))
           )
+        )
+      ))
+    }
+
+    "finish match and preserve state after restart" in new Test {
+      competitionActor ! sampleAddMatchCommand
+      val matchId: MatchId = expectMsgType[CommandProcessed].event.matchId
+
+      competitionActor ! FinishMatch(matchId, Score(3, 1))
+      expectMsg(CommandProcessed(MatchFinished(matchId, Score(3, 1))))
+
+      competitionActor ! PoisonPill
+
+      val restored: ActorRef = system.actorOf(CompetitionActor.props(competitionId))
+      restored ! GetAllMatches
+      expectMsg(Map(
+        matchId -> Match(
+          sampleAddMatchCommand.homeTeamName,
+          sampleAddMatchCommand.awayTeamName,
+          sampleAddMatchCommand.startDate,
+          Match.FINISHED,
+          Score(3, 1)
         )
       ))
     }
