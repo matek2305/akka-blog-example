@@ -5,7 +5,7 @@ import java.util.UUID
 
 import akka.actor.{ActorRef, ActorSystem, PoisonPill}
 import akka.testkit.{ImplicitSender, TestKit}
-import com.github.matek2305.djamoe.app.CompetitionActorQuery.GetAllMatches
+import com.github.matek2305.djamoe.app.CompetitionActorQuery.{GetAllMatches, GetPoints}
 import com.github.matek2305.djamoe.app.CompetitionActorResponse.CommandProcessed
 import com.github.matek2305.djamoe.app.CompetitionActorSpec.Test
 import com.github.matek2305.djamoe.domain.CompetitionCommand.{AddMatch, FinishMatch, MakeBet}
@@ -134,6 +134,40 @@ class CompetitionActorSpec
           Score(3, 1)
         )
       ))
+    }
+
+    "return empty points map" in new Test {
+      competitionActor ! GetPoints
+      expectMsg(Map.empty)
+
+      competitionActor ! sampleAddMatchCommand
+      expectMsgType[CommandProcessed]
+
+      competitionActor ! GetPoints
+      expectMsg(Map.empty)
+    }
+
+    "calculate points after match finish" in new Test {
+      competitionActor ! sampleAddMatchCommand
+      val matchId: MatchId = expectMsgType[CommandProcessed].event.matchId
+
+      competitionActor ! MakeBet(matchId, "Foo", Score(0, 3))
+      expectMsgType[CommandProcessed]
+
+      competitionActor ! MakeBet(matchId, "Bar", Score(1, 2))
+      expectMsgType[CommandProcessed]
+
+      competitionActor ! MakeBet(matchId, "Baz", Score(2, 0))
+      expectMsgType[CommandProcessed]
+
+      competitionActor ! GetPoints
+      expectMsg(Map("Foo" -> 0, "Bar" -> 0, "Baz" -> 0))
+
+      competitionActor ! FinishMatch(matchId, Score(0, 3))
+      expectMsgType[CommandProcessed]
+
+      competitionActor ! GetPoints
+      expectMsg(Map("Foo" -> 5, "Bar" -> 2, "Baz" -> 0))
     }
   }
 }
