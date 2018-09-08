@@ -9,7 +9,7 @@ final case class Match(
   awayTeamName: String,
   startDate: LocalDateTime,
   status: Match.Status = Match.CREATED,
-  result: Score = null,
+  result: Option[Score] = None,
   bets: Map[String, Bet] = Map.empty
 ) {
 
@@ -22,7 +22,7 @@ final case class Match(
   def lockBetting(): Match = copy(status = Match.LOCKED)
 
   def finish(result: Score): Match = copy(
-    result = result,
+    result = Some(result),
     status = Match.FINISHED,
     bets = bets map {
       case (who, bet) => (who, bet.copy(points = calculatePoints(bet.score, result)))

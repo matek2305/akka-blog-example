@@ -131,7 +131,7 @@ class CompetitionActorSpec
           sampleAddMatchCommand.awayTeamName,
           sampleAddMatchCommand.startDate,
           Match.FINISHED,
-          Score(3, 1)
+          Some(Score(3, 1))
         )
       ))
     }
@@ -270,7 +270,7 @@ class CompetitionActorSpec
           sampleAddMatchCommand.awayTeamName,
           sampleAddMatchCommand.startDate,
           Match.FINISHED,
-          Score(2, 2)
+          Some(Score(2, 2))
         )
       ))
     }
