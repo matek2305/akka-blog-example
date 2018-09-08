@@ -8,7 +8,7 @@ import com.github.matek2305.djamoe.app.CompetitionActorQuery.{GetAllMatches, Get
 import com.github.matek2305.djamoe.app.CompetitionActorResponse.CommandProcessed
 import com.github.matek2305.djamoe.domain.CompetitionCommand.{AddMatch, FinishMatch, MakeBet}
 import com.github.matek2305.djamoe.domain.CompetitionEvent.{BetMade, MatchAdded, MatchFinished}
-import com.github.matek2305.djamoe.domain.{Match, MatchId, Score}
+import com.github.matek2305.djamoe.domain._
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContextExecutor, Future}
@@ -33,14 +33,18 @@ trait CompetitionService {
   }
 
   def addMatch(addMatch: AddMatch): Future[MatchAdded] = {
-    (competitionActor ? addMatch).mapTo[CommandProcessed].map(_.event).mapTo[MatchAdded]
+    sendCommand(addMatch).mapTo[MatchAdded]
   }
 
   def finishMatch(matchId: MatchId, score: Score): Future[MatchFinished] = {
-    (competitionActor ? FinishMatch(matchId, score)).mapTo[CommandProcessed].map(_.event).mapTo[MatchFinished]
+    sendCommand(FinishMatch(matchId, score)).mapTo[MatchFinished]
   }
 
   def makeBet(matchId: MatchId, who: String, score: Score): Future[BetMade] = {
-    (competitionActor ? MakeBet(matchId, who, score)).mapTo[CommandProcessed].map(_.event).mapTo[BetMade]
+    sendCommand(MakeBet(matchId, who, score)).mapTo[BetMade]
+  }
+
+  private def sendCommand(command: CompetitionCommand): Future[CompetitionEvent] = {
+    (competitionActor ? command).mapTo[CommandProcessed].map(_.event)
   }
 }
