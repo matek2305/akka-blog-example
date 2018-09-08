@@ -41,6 +41,6 @@ trait CompetitionService {
   }
 
   def makeBet(matchId: MatchId, who: String, score: Score): Future[BetMade] = {
-    (competitionActor ? MakeBet(matchId, who, score)).mapTo[BetMade]
+    (competitionActor ? MakeBet(matchId, who, score)).mapTo[CommandProcessed].map(_.event).mapTo[BetMade]
   }
 }

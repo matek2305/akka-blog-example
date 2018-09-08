@@ -9,8 +9,8 @@ import akka.testkit.TestProbe
 import com.github.matek2305.djamoe.app.CompetitionActorQuery.{GetAllMatches, GetPoints}
 import com.github.matek2305.djamoe.app.CompetitionActorResponse
 import com.github.matek2305.djamoe.app.CompetitionActorResponse.CommandProcessed
-import com.github.matek2305.djamoe.domain.CompetitionCommand.{AddMatch, FinishMatch}
-import com.github.matek2305.djamoe.domain.CompetitionEvent.{MatchAdded, MatchFinished}
+import com.github.matek2305.djamoe.domain.CompetitionCommand.{AddMatch, FinishMatch, MakeBet}
+import com.github.matek2305.djamoe.domain.CompetitionEvent.{BetMade, MatchAdded, MatchFinished}
 import com.github.matek2305.djamoe.domain.{Match, MatchId, Score}
 import com.github.matek2305.djamoe.restapi.CompetitionRestApiResponse.{GetMatchesResponse, GetPointsResponse, MatchResponse, PlayerPoints}
 import com.typesafe.config.{Config, ConfigFactory}
@@ -88,7 +88,7 @@ class CompetitionRestApiSpec extends FlatSpec
     }
   }
 
-  it should "finish match with given result when POST to /matches/{matchId}/results" in {
+  it should "finish match with given result when POST to /matches/:matchId/results" in {
     val matchId = MatchId()
     val score = Score(2, 2)
 
@@ -99,6 +99,20 @@ class CompetitionRestApiSpec extends FlatSpec
       eventually { status shouldEqual StatusCodes.OK }
 
       responseAs[MatchFinished] shouldEqual MatchFinished(matchId, score)
+    }
+  }
+
+  it should "add current user's bet when POST to /match/:matchId/bets" in {
+    val matchId = MatchId()
+    val bet = Score(2, 2)
+
+    Post(s"/matches/$matchId/bets", HttpEntity(ContentTypes.`application/json`, bet.toJson.toString)) ~> routes ~> check {
+      probe.expectMsg(MakeBet(matchId, "User", bet))
+      probe.reply(CommandProcessed(BetMade(matchId, "User", bet)))
+
+      eventually { status shouldEqual StatusCodes.OK }
+
+      responseAs[BetMade] shouldEqual BetMade(matchId, "User", bet)
     }
   }
 }

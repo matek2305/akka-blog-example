@@ -32,7 +32,10 @@ trait CompetitionRestApi extends CompetitionService with SprayJsonConfig {
               pathPrefix(JavaUUID.map(MatchId(_))) { matchId =>
                 (pathPrefix("results") & entity(as[Score])) { score =>
                   onSuccess(finishMatch(matchId, score)) { finished => complete(StatusCodes.OK -> finished) }
-                }
+                } ~
+                  (pathPrefix("bets") & entity(as[Score])) { bet =>
+                    onSuccess(makeBet(matchId, "User", bet)) { made => complete(StatusCodes.OK -> made) }
+                  }
               }
           }
       } ~
