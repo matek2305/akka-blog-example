@@ -6,7 +6,7 @@ import akka.actor.ActorRef
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.TestProbe
-import com.github.matek2305.djamoe.app.CompetitionActorQuery.GetAllMatches
+import com.github.matek2305.djamoe.app.CompetitionActorQuery.{GetAllMatches, GetPoints}
 import com.github.matek2305.djamoe.domain.{Match, MatchId}
 import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest.concurrent.Eventually
@@ -42,6 +42,27 @@ class RestApiSpec extends FlatSpec
 
       responseAs[GetMatchesResponse] shouldEqual GetMatchesResponse(
         List(MatchResponse(matchId, "CREATED", matchDetails.homeTeamName, matchDetails.awayTeamName, matchDetails.startDate))
+      )
+    }
+  }
+
+  it should "return list of player's points when GET /points" in {
+    Get("/points") ~> routes ~> check {
+      probe.expectMsg(GetPoints)
+      probe.reply(Map(
+        "Foo" -> 5,
+        "Bar" -> 2,
+        "Baz" -> 0
+      ))
+
+      eventually { status shouldEqual StatusCodes.OK }
+
+      responseAs[GetPointsResponse] shouldEqual GetPointsResponse(
+        List(
+          PlayerPoints("Foo", 5),
+          PlayerPoints("Bar", 2),
+          PlayerPoints("Baz", 0)
+        )
       )
     }
   }
