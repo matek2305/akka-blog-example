@@ -5,6 +5,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import com.github.matek2305.djamoe.app.CompetitionService
 import com.github.matek2305.djamoe.domain.CompetitionCommand.AddMatch
+import com.github.matek2305.djamoe.domain.{MatchId, Score}
 import com.github.matek2305.djamoe.restapi.CompetitionRestApiResponse.{GetMatchesResponse, GetPointsResponse, MatchResponse, PlayerPoints}
 import com.typesafe.config.Config
 
@@ -27,7 +28,12 @@ trait CompetitionRestApi extends CompetitionService with SprayJsonConfig {
           post {
             (pathEndOrSingleSlash & entity(as[AddMatch])) { command =>
               onSuccess(addMatch(command)) { added => complete(StatusCodes.Created -> added) }
-            }
+            } ~
+              pathPrefix(JavaUUID.map(MatchId(_))) { matchId =>
+                (pathPrefix("results") & entity(as[Score])) { score =>
+                  onSuccess(finishMatch(matchId, score)) { finished => complete(StatusCodes.OK -> finished) }
+                }
+              }
           }
       } ~
         pathPrefix("points") {

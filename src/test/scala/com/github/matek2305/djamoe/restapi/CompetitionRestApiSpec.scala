@@ -7,9 +7,11 @@ import akka.http.scaladsl.model.{ContentTypes, HttpEntity, StatusCodes}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.TestProbe
 import com.github.matek2305.djamoe.app.CompetitionActorQuery.{GetAllMatches, GetPoints}
-import com.github.matek2305.djamoe.domain.CompetitionCommand.AddMatch
-import com.github.matek2305.djamoe.domain.CompetitionEvent.MatchAdded
-import com.github.matek2305.djamoe.domain.{Match, MatchId}
+import com.github.matek2305.djamoe.app.CompetitionActorResponse
+import com.github.matek2305.djamoe.app.CompetitionActorResponse.CommandProcessed
+import com.github.matek2305.djamoe.domain.CompetitionCommand.{AddMatch, FinishMatch}
+import com.github.matek2305.djamoe.domain.CompetitionEvent.{MatchAdded, MatchFinished}
+import com.github.matek2305.djamoe.domain.{Match, MatchId, Score}
 import com.github.matek2305.djamoe.restapi.CompetitionRestApiResponse.{GetMatchesResponse, GetPointsResponse, MatchResponse, PlayerPoints}
 import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest.concurrent.Eventually
@@ -73,17 +75,30 @@ class CompetitionRestApiSpec extends FlatSpec
 
   it should "add match to competition when POST to /matches" in {
     val addMatch = AddMatch("France", "Belgium", LocalDateTime.of(2018, Month.JULY, 10, 20, 0))
-    val content: String = addMatch.toJson.toString()
 
-    Post("/matches", HttpEntity(ContentTypes.`application/json`, content)) ~> routes ~> check {
+    Post("/matches", HttpEntity(ContentTypes.`application/json`, addMatch.toJson.toString)) ~> routes ~> check {
       probe.expectMsg(addMatch)
 
       val matchId = MatchId()
-      probe.reply(addMatch.toMatchAdded(matchId))
+      probe.reply(CommandProcessed(addMatch.toMatchAdded(matchId)))
 
       eventually { status shouldEqual StatusCodes.Created }
 
       responseAs[MatchAdded] shouldEqual addMatch.toMatchAdded(matchId)
+    }
+  }
+
+  it should "finish match with given result when POST to /matches/{matchId}/results" in {
+    val matchId = MatchId()
+    val score = Score(2, 2)
+
+    Post(s"/matches/$matchId/results", HttpEntity(ContentTypes.`application/json`, score.toJson.toString)) ~> routes ~> check {
+      probe.expectMsg(FinishMatch(matchId, score))
+      probe.reply(CommandProcessed(MatchFinished(matchId, score)))
+
+      eventually { status shouldEqual StatusCodes.OK }
+
+      responseAs[MatchFinished] shouldEqual MatchFinished(matchId, score)
     }
   }
 }

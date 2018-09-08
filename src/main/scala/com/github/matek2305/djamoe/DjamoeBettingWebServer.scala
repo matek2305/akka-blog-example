@@ -10,6 +10,7 @@ import com.typesafe.config.{Config, ConfigFactory}
 import scala.concurrent.ExecutionContextExecutor
 
 object DjamoeBettingWebServer extends App with CompetitionRestApi {
+
   override implicit val system: ActorSystem = ActorSystem()
   override implicit val materializer: Materializer = ActorMaterializer()
   override implicit val executor: ExecutionContextExecutor = system.dispatcher

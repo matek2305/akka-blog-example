@@ -5,9 +5,10 @@ import akka.pattern.ask
 import akka.stream.Materializer
 import akka.util.Timeout
 import com.github.matek2305.djamoe.app.CompetitionActorQuery.{GetAllMatches, GetPoints}
+import com.github.matek2305.djamoe.app.CompetitionActorResponse.CommandProcessed
 import com.github.matek2305.djamoe.domain.CompetitionCommand.{AddMatch, FinishMatch, MakeBet}
 import com.github.matek2305.djamoe.domain.CompetitionEvent.{BetMade, MatchAdded, MatchFinished}
-import com.github.matek2305.djamoe.domain.{Match, MatchId}
+import com.github.matek2305.djamoe.domain.{Match, MatchId, Score}
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContextExecutor, Future}
@@ -32,14 +33,14 @@ trait CompetitionService {
   }
 
   def addMatch(addMatch: AddMatch): Future[MatchAdded] = {
-    (competitionActor ? addMatch).mapTo[MatchAdded]
+    (competitionActor ? addMatch).mapTo[CommandProcessed].map(_.event).mapTo[MatchAdded]
   }
 
-  def finishMatch(finishMatch: FinishMatch): Future[MatchFinished] = {
-    (competitionActor ? finishMatch).mapTo[MatchFinished]
+  def finishMatch(matchId: MatchId, score: Score): Future[MatchFinished] = {
+    (competitionActor ? FinishMatch(matchId, score)).mapTo[CommandProcessed].map(_.event).mapTo[MatchFinished]
   }
 
-  def makeBet(makeBet: MakeBet): Future[BetMade] = {
-    (competitionActor ? makeBet).mapTo[BetMade]
+  def makeBet(matchId: MatchId, who: String, score: Score): Future[BetMade] = {
+    (competitionActor ? MakeBet(matchId, who, score)).mapTo[BetMade]
   }
 }
