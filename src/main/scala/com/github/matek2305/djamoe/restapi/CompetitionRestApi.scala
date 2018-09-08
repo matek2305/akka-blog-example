@@ -19,7 +19,7 @@ trait CompetitionRestApi extends CompetitionService with SprayJsonConfig {
         (get & pathEndOrSingleSlash) {
           onSuccess(allMatches) { matchesMap =>
             val matches = matchesMap
-              .map { case (k, v) => MatchResponse(k, v.status.toString, v.homeTeamName, v.awayTeamName, v.startDate) }
+              .map { case (id, entry) => MatchResponse(id, entry.status.toString, entry.homeTeamName, entry.awayTeamName, entry.startDate, entry.result) }
               .toList
 
             complete(StatusCodes.OK -> GetMatchesResponse(matches))

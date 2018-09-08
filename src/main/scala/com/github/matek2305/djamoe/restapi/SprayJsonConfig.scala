@@ -34,11 +34,6 @@ trait SprayJsonConfig extends SprayJsonSupport with DefaultJsonProtocol {
     override def write(matchId: MatchId): JsValue = JsString(matchId.toString)
   }
 
-  implicit val matchResponseFormat: RootJsonFormat[MatchResponse] = jsonFormat5(MatchResponse)
-  implicit val getMatchesResponseFormat: RootJsonFormat[GetMatchesResponse] = jsonFormat1(GetMatchesResponse)
-  implicit val playerPointsFormat: RootJsonFormat[PlayerPoints] = jsonFormat2(PlayerPoints)
-  implicit val getPointsResponseFormat: RootJsonFormat[GetPointsResponse] = jsonFormat1(GetPointsResponse)
-
   implicit val addMatchFormat: RootJsonFormat[AddMatch] = jsonFormat3(AddMatch)
   implicit val matchAddedFormat: RootJsonFormat[MatchAdded] = jsonFormat4(MatchAdded)
 
@@ -47,4 +42,10 @@ trait SprayJsonConfig extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val matchFinishedFormat: RootJsonFormat[MatchFinished] = jsonFormat2(MatchFinished)
 
   implicit val betMadeFormat: RootJsonFormat[BetMade] = jsonFormat3(BetMade)
+
+  implicit val playerPointsFormat: RootJsonFormat[PlayerPoints] = jsonFormat2(PlayerPoints)
+  implicit val getPointsResponseFormat: RootJsonFormat[GetPointsResponse] = jsonFormat1(GetPointsResponse)
+
+  implicit val matchResponseFormat: RootJsonFormat[MatchResponse] = jsonFormat6(MatchResponse)
+  implicit val getMatchesResponseFormat: RootJsonFormat[GetMatchesResponse] = jsonFormat1(GetMatchesResponse)
 }

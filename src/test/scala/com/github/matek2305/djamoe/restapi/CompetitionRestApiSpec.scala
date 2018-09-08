@@ -47,7 +47,7 @@ class CompetitionRestApiSpec extends FlatSpec
       eventually { status shouldEqual StatusCodes.OK }
 
       responseAs[GetMatchesResponse] shouldEqual GetMatchesResponse(
-        List(MatchResponse(matchId, "CREATED", matchDetails.homeTeamName, matchDetails.awayTeamName, matchDetails.startDate))
+        List(MatchResponse(matchId, "CREATED", matchDetails.homeTeamName, matchDetails.awayTeamName, matchDetails.startDate, None))
       )
     }
   }
