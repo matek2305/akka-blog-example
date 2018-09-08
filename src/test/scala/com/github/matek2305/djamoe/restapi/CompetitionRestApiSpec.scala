@@ -3,16 +3,19 @@ package com.github.matek2305.djamoe.restapi
 import java.time.{LocalDateTime, Month}
 
 import akka.actor.ActorRef
-import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.model.{ContentTypes, HttpEntity, StatusCodes}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.TestProbe
 import com.github.matek2305.djamoe.app.CompetitionActorQuery.{GetAllMatches, GetPoints}
+import com.github.matek2305.djamoe.domain.CompetitionCommand.AddMatch
+import com.github.matek2305.djamoe.domain.CompetitionEvent.MatchAdded
 import com.github.matek2305.djamoe.domain.{Match, MatchId}
 import com.github.matek2305.djamoe.restapi.CompetitionRestApiResponse.{GetMatchesResponse, GetPointsResponse, MatchResponse, PlayerPoints}
 import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest.concurrent.Eventually
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.{FlatSpec, Matchers}
+import spray.json._
 
 class CompetitionRestApiSpec extends FlatSpec
   with CompetitionRestApi
@@ -65,6 +68,22 @@ class CompetitionRestApiSpec extends FlatSpec
           PlayerPoints("Baz", 0)
         )
       )
+    }
+  }
+
+  it should "add match to competition when POST to /matches" in {
+    val addMatch = AddMatch("France", "Belgium", LocalDateTime.of(2018, Month.JULY, 10, 20, 0))
+    val content: String = addMatch.toJson.toString()
+
+    Post("/matches", HttpEntity(ContentTypes.`application/json`, content)) ~> routes ~> check {
+      probe.expectMsg(addMatch)
+
+      val matchId = MatchId()
+      probe.reply(addMatch.toMatchAdded(matchId))
+
+      eventually { status shouldEqual StatusCodes.Created }
+
+      responseAs[MatchAdded] shouldEqual addMatch.toMatchAdded(matchId)
     }
   }
 }
