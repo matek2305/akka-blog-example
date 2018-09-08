@@ -1,19 +1,27 @@
 package com.github.matek2305.djamoe.app
 
-import akka.actor.ActorRef
+import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
+import akka.stream.Materializer
 import akka.util.Timeout
 import com.github.matek2305.djamoe.app.CompetitionActorQuery.{GetAllMatches, GetPoints}
 import com.github.matek2305.djamoe.domain.CompetitionCommand.{AddMatch, FinishMatch, MakeBet}
 import com.github.matek2305.djamoe.domain.CompetitionEvent.{BetMade, MatchAdded, MatchFinished}
 import com.github.matek2305.djamoe.domain.{Match, MatchId}
 
-import scala.concurrent.Future
+import scala.concurrent.duration._
+import scala.concurrent.{ExecutionContextExecutor, Future}
 
-trait CompetitionFacade {
+trait CompetitionService {
 
-  implicit val competitionActor: ActorRef
-  implicit val timeout: Timeout
+  implicit val system: ActorSystem
+  implicit val materializer: Materializer
+
+  implicit def executor: ExecutionContextExecutor
+
+  implicit def timeout: Timeout = Timeout(5.seconds)
+
+  def competitionActor: ActorRef
 
   def allMatches: Future[Map[MatchId, Match]] = {
     (competitionActor ? GetAllMatches).mapTo[Map[MatchId, Match]]

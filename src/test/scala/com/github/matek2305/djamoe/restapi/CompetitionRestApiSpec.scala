@@ -1,4 +1,4 @@
-package com.github.matek2305.djamoe.app
+package com.github.matek2305.djamoe.restapi
 
 import java.time.{LocalDateTime, Month}
 
@@ -8,13 +8,14 @@ import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.TestProbe
 import com.github.matek2305.djamoe.app.CompetitionActorQuery.{GetAllMatches, GetPoints}
 import com.github.matek2305.djamoe.domain.{Match, MatchId}
+import com.github.matek2305.djamoe.restapi.CompetitionRestApiResponse.{GetMatchesResponse, GetPointsResponse, MatchResponse, PlayerPoints}
 import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest.concurrent.Eventually
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.{FlatSpec, Matchers}
 
-class RestApiSpec extends FlatSpec
-  with RestApi
+class CompetitionRestApiSpec extends FlatSpec
+  with CompetitionRestApi
   with ScalatestRouteTest
   with Matchers
   with Eventually {
