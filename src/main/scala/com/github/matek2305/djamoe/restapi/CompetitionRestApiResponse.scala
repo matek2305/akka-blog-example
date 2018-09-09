@@ -8,7 +8,16 @@ sealed trait CompetitionRestApiResponse
 
 object CompetitionRestApiResponse {
 
-  final case class MatchResponse(id: MatchId, status: String, homeTeamName: String, awayTeamName: String, startDate: LocalDateTime, result: Option[Score])
+  final case class MatchResponse(
+      id: MatchId,
+      status: String,
+      homeTeamName: String,
+      awayTeamName: String,
+      startDate: LocalDateTime,
+      result: Option[Score],
+      bet: Option[Score],
+      points: Int
+  )
     extends CompetitionRestApiResponse
 
   final case class GetMatchesResponse(matches: List[MatchResponse])

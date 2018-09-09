@@ -7,7 +7,6 @@ import akka.http.scaladsl.model.{ContentTypes, HttpEntity, StatusCodes}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.TestProbe
 import com.github.matek2305.djamoe.app.CompetitionActorQuery.{GetAllMatches, GetPoints}
-import com.github.matek2305.djamoe.app.CompetitionActorResponse
 import com.github.matek2305.djamoe.app.CompetitionActorResponse.CommandProcessed
 import com.github.matek2305.djamoe.domain.CompetitionCommand.{AddMatch, FinishMatch, MakeBet}
 import com.github.matek2305.djamoe.domain.CompetitionEvent.{BetMade, MatchAdded, MatchFinished}
@@ -47,7 +46,18 @@ class CompetitionRestApiSpec extends FlatSpec
       eventually { status shouldEqual StatusCodes.OK }
 
       responseAs[GetMatchesResponse] shouldEqual GetMatchesResponse(
-        List(MatchResponse(matchId, "CREATED", matchDetails.homeTeamName, matchDetails.awayTeamName, matchDetails.startDate, None))
+        List(
+          MatchResponse(
+            matchId,
+            "CREATED",
+            matchDetails.homeTeamName,
+            matchDetails.awayTeamName,
+            matchDetails.startDate,
+            None,
+            None,
+            0
+          )
+        )
       )
     }
   }

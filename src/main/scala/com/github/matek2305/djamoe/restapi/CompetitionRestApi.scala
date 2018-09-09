@@ -23,7 +23,18 @@ trait CompetitionRestApi
         (get & pathEndOrSingleSlash) {
           onSuccess(allMatches) { matchesMap =>
             val matches = matchesMap
-              .map { case (id, entry) => MatchResponse(id, entry.status.toString, entry.homeTeamName, entry.awayTeamName, entry.startDate, entry.result) }
+              .map {
+                case (id, entry) => MatchResponse(
+                  id,
+                  entry.status.toString,
+                  entry.homeTeamName,
+                  entry.awayTeamName,
+                  entry.startDate,
+                  entry.result,
+                  entry.bets.get("User").map(_.score),
+                  entry.bets.get("User").map(_.points).getOrElse(0)
+                )
+              }
               .toList
 
             complete(StatusCodes.OK -> GetMatchesResponse(matches))
