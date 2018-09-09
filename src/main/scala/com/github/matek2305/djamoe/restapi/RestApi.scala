@@ -2,11 +2,10 @@ package com.github.matek2305.djamoe.restapi
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.server.{Directive1, Route}
 import com.github.matek2305.djamoe.app.CompetitionService
-import com.github.matek2305.djamoe.auth.AuthActor.{AccessToken, InvalidCredentials}
+import com.github.matek2305.djamoe.auth.AuthActor._
 import com.github.matek2305.djamoe.auth.AuthService
 import com.github.matek2305.djamoe.domain.CompetitionCommand.AddMatch
 import com.github.matek2305.djamoe.domain.{MatchId, Score}
@@ -26,14 +25,14 @@ trait RestApi
     (pathPrefix("login") & post & pathEndOrSingleSlash & entity(as[LoginRequest])) { login =>
       onSuccess(getAccessToken(login.username, login.password)) {
         case AccessToken(jwt) => complete(StatusCodes.OK -> LoginResponse(jwt))
-        case InvalidCredentials() => complete(StatusCodes.Unauthorized -> "Invalid credentials")
+        case InvalidCredentials => complete(StatusCodes.Unauthorized -> "Invalid credentials")
       }
     }
   }
 
   val routes: Route = {
     logRequestResult("competition-api") {
-      (pathPrefix("matches") & headerValueByName("X-Logged-User")) { loggedUser =>
+      (pathPrefix("matches") & authenticated) { username =>
         (get & pathEndOrSingleSlash) {
           onSuccess(allMatches) { matchesMap =>
             val matches = matchesMap
@@ -45,8 +44,8 @@ trait RestApi
                   entry.awayTeamName,
                   entry.startDate,
                   entry.result,
-                  entry.bets.get(loggedUser).map(_.score),
-                  entry.bets.get(loggedUser).map(_.points).getOrElse(0)
+                  entry.bets.get(username).map(_.score),
+                  entry.bets.get(username).map(_.points).getOrElse(0)
                 )
               }
               .toList
@@ -63,7 +62,7 @@ trait RestApi
                   onSuccess(finishMatch(matchId, score)) { finished => complete(StatusCodes.OK -> finished) }
                 } ~
                   (pathPrefix("bets") & entity(as[Score])) { bet =>
-                    onSuccess(makeBet(matchId, loggedUser, bet)) { made => complete(StatusCodes.OK -> made) }
+                    onSuccess(makeBet(matchId, username, bet)) { made => complete(StatusCodes.OK -> made) }
                   }
               }
           }
@@ -79,6 +78,17 @@ trait RestApi
             }
           }
         }
+    }
+  }
+
+  private def authenticated: Directive1[String] = {
+    optionalHeaderValueByName("Authorization").flatMap {
+      case Some(jwt) => onSuccess(validateAccessToken(jwt)).flatMap {
+        case ValidationFailed => complete(StatusCodes.Unauthorized)
+        case TokenExpired => complete(StatusCodes.Unauthorized -> "Token expired.")
+        case TokenIsValid(claims) => provide(claims.getOrElse("user", "").asInstanceOf[String])
+      }
+      case _ => complete(StatusCodes.Unauthorized)
     }
   }
 }

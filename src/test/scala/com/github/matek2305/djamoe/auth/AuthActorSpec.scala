@@ -32,7 +32,7 @@ class AuthActorSpec
     "return invalid credentials message for bad username/password" in {
       val authService = system.actorOf(AuthActor.props())
       authService ! GetAccessToken("user1", "invalid")
-      expectMsg(InvalidCredentials())
+      expectMsg(InvalidCredentials)
     }
   }
 }

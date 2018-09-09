@@ -27,16 +27,16 @@ class AuthActor extends Actor {
       sender() ! AccessToken(JsonWebToken(header, setClaims(username), config.getString("auth.jwt-secret")))
 
     case GetAccessToken(_, _) =>
-      sender() ! InvalidCredentials()
+      sender() ! InvalidCredentials
 
     case ValidateAccessToken(jwt) if isTokenExpired(jwt) =>
-      sender() ! TokenExpired()
+      sender() ! TokenExpired
 
     case ValidateAccessToken(jwt) if JsonWebToken.validate(jwt, config.getString("auth.jwt-secret")) =>
       sender() ! TokenIsValid(getClaims(jwt).getOrElse(Map.empty[String, Any]))
 
     case ValidateAccessToken(_) =>
-      sender() ! ValidationFailed()
+      sender() ! ValidationFailed
   }
 
   private def validCredentials(username: String, password: String) = users.get(username) match {
@@ -80,15 +80,15 @@ object AuthActor {
 
   final case class AccessToken(token: String) extends GetAccessTokenResponse
 
-  final case class InvalidCredentials() extends GetAccessTokenResponse
+  final case object InvalidCredentials extends GetAccessTokenResponse
 
   sealed trait ValidateAccessTokenResponse
 
   final case class TokenIsValid(claims: Map[String, Any]) extends ValidateAccessTokenResponse
 
-  final case class TokenExpired() extends ValidateAccessTokenResponse
+  final case object TokenExpired extends ValidateAccessTokenResponse
 
-  final case class ValidationFailed() extends ValidateAccessTokenResponse
+  final case object ValidationFailed extends ValidateAccessTokenResponse
 
   def props() = Props(new AuthActor)
 }
