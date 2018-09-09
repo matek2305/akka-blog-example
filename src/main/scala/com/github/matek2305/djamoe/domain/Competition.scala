@@ -1,6 +1,5 @@
 package com.github.matek2305.djamoe.domain
 
-import com.github.matek2305.djamoe.CombinePointMaps
 import com.github.matek2305.djamoe.domain.CompetitionCommand.{AddMatch, FinishMatch, LockBetting, MakeBet}
 import com.github.matek2305.djamoe.domain.CompetitionEvent.{BetMade, BettingLocked, MatchAdded, MatchFinished}
 
@@ -11,7 +10,7 @@ final case class Competition(matches: Map[MatchId, Match]) {
   def pointsMap: Map[String, Int] = {
     matches.values
       .map(m => m.getPointsMap())
-      .reduceOption((a, b) => CombinePointMaps.combine(a, b))
+      .reduceOption((a, b) => Competition.combinePoints(a, b))
       .getOrElse(Map.empty)
   }
 
@@ -56,7 +55,21 @@ final case class Competition(matches: Map[MatchId, Match]) {
 }
 
 object Competition {
+
+  type PointsMap = Map[String, Int]
+
   def apply(): Competition = Competition(Map.empty)
+
+  def combinePoints(x: PointsMap, y: PointsMap): PointsMap = {
+    val keys = x.keys.toSet.union(y.keys.toSet)
+
+    val xDef = x.withDefaultValue(0)
+    val yDef = y.withDefaultValue(0)
+
+    keys
+      .map { k => k -> (xDef(k) + yDef(k)) }
+      .toMap
+  }
 }
 
 
