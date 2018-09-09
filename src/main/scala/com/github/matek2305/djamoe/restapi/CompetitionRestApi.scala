@@ -19,7 +19,7 @@ trait CompetitionRestApi
 
   val routes: Route = {
     logRequestResult("competition-api") {
-      pathPrefix("matches") {
+      (pathPrefix("matches") & headerValueByName("X-Logged-User")) { loggedUser =>
         (get & pathEndOrSingleSlash) {
           onSuccess(allMatches) { matchesMap =>
             val matches = matchesMap
@@ -31,8 +31,8 @@ trait CompetitionRestApi
                   entry.awayTeamName,
                   entry.startDate,
                   entry.result,
-                  entry.bets.get("User").map(_.score),
-                  entry.bets.get("User").map(_.points).getOrElse(0)
+                  entry.bets.get(loggedUser).map(_.score),
+                  entry.bets.get(loggedUser).map(_.points).getOrElse(0)
                 )
               }
               .toList
@@ -49,7 +49,7 @@ trait CompetitionRestApi
                   onSuccess(finishMatch(matchId, score)) { finished => complete(StatusCodes.OK -> finished) }
                 } ~
                   (pathPrefix("bets") & entity(as[Score])) { bet =>
-                    onSuccess(makeBet(matchId, "User", bet)) { made => complete(StatusCodes.OK -> made) }
+                    onSuccess(makeBet(matchId, loggedUser, bet)) { made => complete(StatusCodes.OK -> made) }
                   }
               }
           }

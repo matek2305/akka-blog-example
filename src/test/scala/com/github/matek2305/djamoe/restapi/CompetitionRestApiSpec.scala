@@ -3,6 +3,7 @@ package com.github.matek2305.djamoe.restapi
 import java.time.{LocalDateTime, Month}
 
 import akka.actor.ActorRef
+import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, StatusCodes}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.TestProbe
@@ -35,7 +36,7 @@ class CompetitionRestApiSpec extends FlatSpec
   )
 
   "rest api" should "return list of all matches when GET /matches" in {
-    Get("/matches") ~> routes ~> check {
+    Get("/matches") ~> RawHeader("X-Logged-User", "Test") ~> routes ~> check {
       probe.expectMsg(GetAllMatches)
 
       val matchId = MatchId()
@@ -86,7 +87,7 @@ class CompetitionRestApiSpec extends FlatSpec
   it should "add match to competition when POST to /matches" in {
     val addMatch = AddMatch("France", "Belgium", LocalDateTime.of(2018, Month.JULY, 10, 20, 0))
 
-    Post("/matches", HttpEntity(ContentTypes.`application/json`, addMatch.toJson.toString)) ~> routes ~> check {
+    Post("/matches", HttpEntity(ContentTypes.`application/json`, addMatch.toJson.toString)) ~> RawHeader("X-Logged-User", "Test") ~> routes ~> check {
       probe.expectMsg(addMatch)
 
       val matchId = MatchId()
@@ -102,7 +103,7 @@ class CompetitionRestApiSpec extends FlatSpec
     val matchId = MatchId()
     val score = Score(2, 2)
 
-    Post(s"/matches/$matchId/results", HttpEntity(ContentTypes.`application/json`, score.toJson.toString)) ~> routes ~> check {
+    Post(s"/matches/$matchId/results", HttpEntity(ContentTypes.`application/json`, score.toJson.toString)) ~> RawHeader("X-Logged-User", "Test") ~> routes ~> check {
       probe.expectMsg(FinishMatch(matchId, score))
       probe.reply(CommandProcessed(MatchFinished(matchId, score)))
 
@@ -116,13 +117,14 @@ class CompetitionRestApiSpec extends FlatSpec
     val matchId = MatchId()
     val bet = Score(2, 2)
 
-    Post(s"/matches/$matchId/bets", HttpEntity(ContentTypes.`application/json`, bet.toJson.toString)) ~> routes ~> check {
-      probe.expectMsg(MakeBet(matchId, "User", bet))
-      probe.reply(CommandProcessed(BetMade(matchId, "User", bet)))
+    val loggedUser = "Test"
+    Post(s"/matches/$matchId/bets", HttpEntity(ContentTypes.`application/json`, bet.toJson.toString)) ~> RawHeader("X-Logged-User", loggedUser) ~> routes ~> check {
+      probe.expectMsg(MakeBet(matchId, loggedUser, bet))
+      probe.reply(CommandProcessed(BetMade(matchId, loggedUser, bet)))
 
       eventually { status shouldEqual StatusCodes.OK }
 
-      responseAs[BetMade] shouldEqual BetMade(matchId, "User", bet)
+      responseAs[BetMade] shouldEqual BetMade(matchId, loggedUser, bet)
     }
   }
 }
