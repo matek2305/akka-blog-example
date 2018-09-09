@@ -16,9 +16,9 @@ trait CompetitionService {
 
   implicit val system: ActorSystem
   implicit val materializer: Materializer
+  implicit val timeout: Timeout
 
   implicit def executor: ExecutionContextExecutor
-  implicit def timeout: Timeout
 
   def competitionActor: ActorRef
 

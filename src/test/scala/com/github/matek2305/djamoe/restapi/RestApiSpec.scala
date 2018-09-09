@@ -10,6 +10,7 @@ import akka.testkit.TestProbe
 import akka.util.Timeout
 import com.github.matek2305.djamoe.app.CompetitionActorQuery.{GetAllMatches, GetPoints}
 import com.github.matek2305.djamoe.app.CompetitionActorResponse.CommandProcessed
+import com.github.matek2305.djamoe.auth.AuthActor.{TokenIsValid, ValidateAccessToken}
 import com.github.matek2305.djamoe.domain.CompetitionCommand.{AddMatch, FinishMatch, MakeBet}
 import com.github.matek2305.djamoe.domain.CompetitionEvent.{BetMade, MatchAdded, MatchFinished}
 import com.github.matek2305.djamoe.domain.{Match, MatchId, Score}
@@ -31,7 +32,7 @@ class RestApiSpec extends FlatSpec
   val probe = TestProbe()
   val authProbe = TestProbe()
 
-  override implicit def timeout: Timeout = Timeout(5.seconds)
+  override implicit val timeout: Timeout = Timeout(5.seconds)
 
   override def config: Config = ConfigFactory.load()
   override def competitionActor: ActorRef = probe.ref
@@ -43,7 +44,10 @@ class RestApiSpec extends FlatSpec
   )
 
   "rest api" should "return list of all matches when GET /matches" in {
-    Get("/matches") ~> RawHeader("X-Logged-User", "Test") ~> routes ~> check {
+    Get("/matches") ~> RawHeader("Authorization", "token") ~> routes ~> check {
+      authProbe.expectMsg(ValidateAccessToken("token"))
+      authProbe.reply(TokenIsValid(Map("user" -> "user")))
+
       probe.expectMsg(GetAllMatches)
 
       val matchId = MatchId()
@@ -71,7 +75,10 @@ class RestApiSpec extends FlatSpec
   }
 
   it should "return list of player's points when GET /points" in {
-    Get("/points") ~> routes ~> check {
+    Get("/points") ~> RawHeader("Authorization", "token") ~> routes ~> check {
+      authProbe.expectMsg(ValidateAccessToken("token"))
+      authProbe.reply(TokenIsValid(Map("user" -> "user")))
+
       probe.expectMsg(GetPoints)
       probe.reply(Map(
         "Foo" -> 5,
@@ -94,7 +101,10 @@ class RestApiSpec extends FlatSpec
   it should "add match to competition when POST to /matches" in {
     val addMatch = AddMatch("France", "Belgium", LocalDateTime.of(2018, Month.JULY, 10, 20, 0))
 
-    Post("/matches", HttpEntity(ContentTypes.`application/json`, addMatch.toJson.toString)) ~> RawHeader("X-Logged-User", "Test") ~> routes ~> check {
+    Post("/matches", HttpEntity(ContentTypes.`application/json`, addMatch.toJson.toString)) ~> RawHeader("Authorization", "token") ~> routes ~> check {
+      authProbe.expectMsg(ValidateAccessToken("token"))
+      authProbe.reply(TokenIsValid(Map("user" -> "user")))
+
       probe.expectMsg(addMatch)
 
       val matchId = MatchId()
@@ -110,7 +120,10 @@ class RestApiSpec extends FlatSpec
     val matchId = MatchId()
     val score = Score(2, 2)
 
-    Post(s"/matches/$matchId/results", HttpEntity(ContentTypes.`application/json`, score.toJson.toString)) ~> RawHeader("X-Logged-User", "Test") ~> routes ~> check {
+    Post(s"/matches/$matchId/results", HttpEntity(ContentTypes.`application/json`, score.toJson.toString)) ~> RawHeader("Authorization", "token") ~> routes ~> check {
+      authProbe.expectMsg(ValidateAccessToken("token"))
+      authProbe.reply(TokenIsValid(Map("user" -> "user")))
+
       probe.expectMsg(FinishMatch(matchId, score))
       probe.reply(CommandProcessed(MatchFinished(matchId, score)))
 
@@ -125,7 +138,10 @@ class RestApiSpec extends FlatSpec
     val bet = Score(2, 2)
 
     val loggedUser = "Test"
-    Post(s"/matches/$matchId/bets", HttpEntity(ContentTypes.`application/json`, bet.toJson.toString)) ~> RawHeader("X-Logged-User", loggedUser) ~> routes ~> check {
+    Post(s"/matches/$matchId/bets", HttpEntity(ContentTypes.`application/json`, bet.toJson.toString)) ~> RawHeader("Authorization", "token") ~> routes ~> check {
+      authProbe.expectMsg(ValidateAccessToken("token"))
+      authProbe.reply(TokenIsValid(Map("user" -> loggedUser)))
+
       probe.expectMsg(MakeBet(matchId, loggedUser, bet))
       probe.reply(CommandProcessed(BetMade(matchId, loggedUser, bet)))
 

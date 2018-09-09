@@ -18,8 +18,7 @@ object WebServer extends App with RestApi {
   override implicit val system: ActorSystem = ActorSystem()
   override implicit val materializer: Materializer = ActorMaterializer()
   override implicit val executor: ExecutionContextExecutor = system.dispatcher
-
-  override implicit def timeout: Timeout = Timeout(5.seconds)
+  override implicit val timeout: Timeout = Timeout(5.seconds)
 
   override def config: Config = ConfigFactory.load()
 

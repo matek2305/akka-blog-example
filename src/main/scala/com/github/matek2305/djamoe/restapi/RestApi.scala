@@ -31,8 +31,8 @@ trait RestApi
   }
 
   val routes: Route = {
-    logRequestResult("competition-api") {
-      (pathPrefix("matches") & authenticated) { username =>
+    (authenticated & logRequestResult("competition-api")) { username =>
+      pathPrefix("matches") {
         (get & pathEndOrSingleSlash) {
           onSuccess(allMatches) { matchesMap =>
             val matches = matchesMap
