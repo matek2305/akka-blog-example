@@ -1,15 +1,16 @@
-package com.github.matek2305.djamoe
+package com.github.matek2305.djamoe.restapi
 
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import com.github.matek2305.djamoe.CompetitionAggregate.{BetMade, MatchCreated, MatchFinished}
-import com.github.matek2305.djamoe.CompetitionRestService._
+import com.github.matek2305.djamoe.domain.CompetitionCommand.{AddMatch, FinishMatch}
+import com.github.matek2305.djamoe.domain.CompetitionEvent.{BetMade, MatchAdded, MatchFinished}
+import com.github.matek2305.djamoe.domain.{MatchId, Score}
+import com.github.matek2305.djamoe.restapi.CompetitionRestApiResponse.{GetMatchesResponse, GetPointsResponse, MatchResponse, PlayerPoints}
 import spray.json.{DefaultJsonProtocol, DeserializationException, JsString, JsValue, RootJsonFormat}
 
-trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
+trait CompetitionProtocols extends DefaultJsonProtocol {
 
   implicit object LocalDateTimeJsonFormat extends RootJsonFormat[LocalDateTime] {
 
@@ -32,16 +33,18 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
     override def write(matchId: MatchId): JsValue = JsString(matchId.toString)
   }
 
-  implicit val matchFormat: RootJsonFormat[Match] = jsonFormat3(Match)
-  implicit val matchCreatedFormat: RootJsonFormat[MatchCreated] = jsonFormat2(MatchCreated)
-  implicit val matchScoreFormat: RootJsonFormat[MatchScore] = jsonFormat2(MatchScore)
-  implicit val betFormat: RootJsonFormat[Bet] = jsonFormat2(Bet)
-  implicit val betMadeFormat: RootJsonFormat[BetMade] = jsonFormat2(BetMade)
+  implicit val addMatchFormat: RootJsonFormat[AddMatch] = jsonFormat3(AddMatch)
+  implicit val matchAddedFormat: RootJsonFormat[MatchAdded] = jsonFormat4(MatchAdded)
+
+  implicit val scoreFormat: RootJsonFormat[Score] = jsonFormat2(Score)
+  implicit val finishMatchFormat: RootJsonFormat[FinishMatch] = jsonFormat2(FinishMatch)
   implicit val matchFinishedFormat: RootJsonFormat[MatchFinished] = jsonFormat2(MatchFinished)
 
-  implicit val loginRequestFormat: RootJsonFormat[LoginRequest] = jsonFormat2(LoginRequest)
+  implicit val betMadeFormat: RootJsonFormat[BetMade] = jsonFormat3(BetMade)
+
   implicit val playerPointsFormat: RootJsonFormat[PlayerPoints] = jsonFormat2(PlayerPoints)
   implicit val getPointsResponseFormat: RootJsonFormat[GetPointsResponse] = jsonFormat1(GetPointsResponse)
-  implicit val matchResponseForm: RootJsonFormat[MatchResponse] = jsonFormat3(MatchResponse)
+
+  implicit val matchResponseFormat: RootJsonFormat[MatchResponse] = jsonFormat8(MatchResponse)
   implicit val getMatchesResponseFormat: RootJsonFormat[GetMatchesResponse] = jsonFormat1(GetMatchesResponse)
 }
