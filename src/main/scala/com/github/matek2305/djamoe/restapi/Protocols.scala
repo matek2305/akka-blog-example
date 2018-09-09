@@ -10,7 +10,7 @@ import com.github.matek2305.djamoe.domain.{MatchId, Score}
 import com.github.matek2305.djamoe.restapi.CompetitionRestApiResponse.{GetMatchesResponse, GetPointsResponse, MatchResponse, PlayerPoints}
 import spray.json.{DefaultJsonProtocol, DeserializationException, JsString, JsValue, RootJsonFormat}
 
-trait CompetitionProtocols extends DefaultJsonProtocol {
+trait Protocols extends DefaultJsonProtocol {
 
   implicit object LocalDateTimeJsonFormat extends RootJsonFormat[LocalDateTime] {
 
