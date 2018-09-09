@@ -1,5 +1,6 @@
 package com.github.matek2305.djamoe.restapi
 
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
@@ -9,7 +10,10 @@ import com.github.matek2305.djamoe.domain.{MatchId, Score}
 import com.github.matek2305.djamoe.restapi.CompetitionRestApiResponse.{GetMatchesResponse, GetPointsResponse, MatchResponse, PlayerPoints}
 import com.typesafe.config.Config
 
-trait CompetitionRestApi extends CompetitionService with SprayJsonConfig {
+trait CompetitionRestApi
+  extends CompetitionService
+    with SprayJsonSupport
+    with CompetitionProtocols {
 
   def config: Config
 

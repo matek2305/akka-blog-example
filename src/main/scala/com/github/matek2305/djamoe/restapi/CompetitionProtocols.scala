@@ -4,14 +4,13 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import com.github.matek2305.djamoe.domain.CompetitionCommand.{AddMatch, FinishMatch}
 import com.github.matek2305.djamoe.domain.CompetitionEvent.{BetMade, MatchAdded, MatchFinished}
 import com.github.matek2305.djamoe.domain.{MatchId, Score}
 import com.github.matek2305.djamoe.restapi.CompetitionRestApiResponse.{GetMatchesResponse, GetPointsResponse, MatchResponse, PlayerPoints}
 import spray.json.{DefaultJsonProtocol, DeserializationException, JsString, JsValue, RootJsonFormat}
 
-trait SprayJsonConfig extends SprayJsonSupport with DefaultJsonProtocol {
+trait CompetitionProtocols extends DefaultJsonProtocol {
 
   implicit object LocalDateTimeJsonFormat extends RootJsonFormat[LocalDateTime] {
 
