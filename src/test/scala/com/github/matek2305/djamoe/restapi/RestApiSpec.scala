@@ -7,28 +7,35 @@ import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, StatusCodes}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.TestProbe
+import akka.util.Timeout
 import com.github.matek2305.djamoe.app.CompetitionActorQuery.{GetAllMatches, GetPoints}
 import com.github.matek2305.djamoe.app.CompetitionActorResponse.CommandProcessed
 import com.github.matek2305.djamoe.domain.CompetitionCommand.{AddMatch, FinishMatch, MakeBet}
 import com.github.matek2305.djamoe.domain.CompetitionEvent.{BetMade, MatchAdded, MatchFinished}
 import com.github.matek2305.djamoe.domain.{Match, MatchId, Score}
-import com.github.matek2305.djamoe.restapi.CompetitionRestApiResponse.{GetMatchesResponse, GetPointsResponse, MatchResponse, PlayerPoints}
+import com.github.matek2305.djamoe.restapi.RestApiResponse.{GetMatchesResponse, GetPointsResponse, MatchResponse, PlayerPoints}
 import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest.concurrent.Eventually
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.{FlatSpec, Matchers}
 import spray.json._
 
-class CompetitionRestApiSpec extends FlatSpec
-  with CompetitionRestApi
+import scala.concurrent.duration._
+
+class RestApiSpec extends FlatSpec
+  with RestApi
   with ScalatestRouteTest
   with Matchers
   with Eventually {
 
   val probe = TestProbe()
+  val authProbe = TestProbe()
+
+  override implicit def timeout: Timeout = Timeout(5.seconds)
 
   override def config: Config = ConfigFactory.load()
   override def competitionActor: ActorRef = probe.ref
+  override def authActor: ActorRef = authProbe.ref
 
   implicit override val patienceConfig: PatienceConfig = PatienceConfig(
     timeout = scaled(Span(1, Seconds)),

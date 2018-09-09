@@ -6,7 +6,6 @@ import akka.stream.Materializer
 import akka.util.Timeout
 import com.github.matek2305.djamoe.auth.AuthActor.{GetAccessToken, GetAccessTokenResponse, ValidateAccessToken, ValidateAccessTokenResponse}
 
-import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
 trait AuthService {
@@ -15,8 +14,7 @@ trait AuthService {
   implicit val materializer: Materializer
 
   implicit def executor: ExecutionContextExecutor
-
-  implicit def timeout: Timeout = Timeout(5.seconds)
+  implicit def timeout: Timeout
 
   def authActor: ActorRef
 

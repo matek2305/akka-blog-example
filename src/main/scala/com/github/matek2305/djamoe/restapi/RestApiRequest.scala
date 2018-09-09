@@ -1,11 +1,11 @@
 package com.github.matek2305.djamoe.restapi
 
-sealed trait CompetitionRestApiRequest
+sealed trait RestApiRequest
 
-object CompetitionRestApiRequest {
+object RestApiRequest {
 
   final case class LoginRequest(username: String, password: String)
-    extends CompetitionRestApiRequest
+    extends RestApiRequest
 
 }
 

@@ -10,11 +10,11 @@ import com.github.matek2305.djamoe.auth.AuthActor.{AccessToken, InvalidCredentia
 import com.github.matek2305.djamoe.auth.AuthService
 import com.github.matek2305.djamoe.domain.CompetitionCommand.AddMatch
 import com.github.matek2305.djamoe.domain.{MatchId, Score}
-import com.github.matek2305.djamoe.restapi.CompetitionRestApiRequest.LoginRequest
-import com.github.matek2305.djamoe.restapi.CompetitionRestApiResponse.{GetMatchesResponse, GetPointsResponse, MatchResponse, PlayerPoints}
+import com.github.matek2305.djamoe.restapi.RestApiRequest.LoginRequest
+import com.github.matek2305.djamoe.restapi.RestApiResponse._
 import com.typesafe.config.Config
 
-trait CompetitionRestApi
+trait RestApi
   extends CompetitionService
     with AuthService
     with SprayJsonSupport
@@ -25,7 +25,7 @@ trait CompetitionRestApi
   val unsecuredRoutes: Route = {
     (pathPrefix("login") & post & pathEndOrSingleSlash & entity(as[LoginRequest])) { login =>
       onSuccess(getAccessToken(login.username, login.password)) {
-        case AccessToken(jwt) => respondWithHeader(RawHeader("Access-Token", jwt)) { complete(StatusCodes.OK) }
+        case AccessToken(jwt) => complete(StatusCodes.OK -> LoginResponse(jwt))
         case InvalidCredentials() => complete(StatusCodes.Unauthorized -> "Invalid credentials")
       }
     }

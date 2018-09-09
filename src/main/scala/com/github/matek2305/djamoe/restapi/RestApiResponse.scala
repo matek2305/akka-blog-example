@@ -4,9 +4,12 @@ import java.time.LocalDateTime
 
 import com.github.matek2305.djamoe.domain.{MatchId, Score}
 
-sealed trait CompetitionRestApiResponse
+sealed trait RestApiResponse
 
-object CompetitionRestApiResponse {
+object RestApiResponse {
+
+  final case class LoginResponse(accessToken: String)
+    extends RestApiResponse
 
   final case class MatchResponse(
       id: MatchId,
@@ -18,15 +21,15 @@ object CompetitionRestApiResponse {
       bet: Option[Score],
       points: Int
   )
-    extends CompetitionRestApiResponse
+    extends RestApiResponse
 
   final case class GetMatchesResponse(matches: List[MatchResponse])
-    extends CompetitionRestApiResponse
+    extends RestApiResponse
 
   final case class PlayerPoints(name: String, points: Int)
-    extends CompetitionRestApiResponse
+    extends RestApiResponse
 
   final case class GetPointsResponse(players: List[PlayerPoints])
-    extends CompetitionRestApiResponse
+    extends RestApiResponse
 
 }

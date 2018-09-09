@@ -10,7 +10,6 @@ import com.github.matek2305.djamoe.domain.CompetitionCommand.{AddMatch, FinishMa
 import com.github.matek2305.djamoe.domain.CompetitionEvent.{BetMade, MatchAdded, MatchFinished}
 import com.github.matek2305.djamoe.domain._
 
-import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
 trait CompetitionService {
@@ -19,8 +18,7 @@ trait CompetitionService {
   implicit val materializer: Materializer
 
   implicit def executor: ExecutionContextExecutor
-
-  implicit def timeout: Timeout = Timeout(5.seconds)
+  implicit def timeout: Timeout
 
   def competitionActor: ActorRef
 
