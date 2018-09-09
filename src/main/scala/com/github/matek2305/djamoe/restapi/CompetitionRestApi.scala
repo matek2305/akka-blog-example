@@ -2,20 +2,34 @@ package com.github.matek2305.djamoe.restapi
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import com.github.matek2305.djamoe.app.CompetitionService
+import com.github.matek2305.djamoe.auth.AuthActor.{AccessToken, InvalidCredentials}
+import com.github.matek2305.djamoe.auth.AuthService
 import com.github.matek2305.djamoe.domain.CompetitionCommand.AddMatch
 import com.github.matek2305.djamoe.domain.{MatchId, Score}
+import com.github.matek2305.djamoe.restapi.CompetitionRestApiRequest.LoginRequest
 import com.github.matek2305.djamoe.restapi.CompetitionRestApiResponse.{GetMatchesResponse, GetPointsResponse, MatchResponse, PlayerPoints}
 import com.typesafe.config.Config
 
 trait CompetitionRestApi
   extends CompetitionService
+    with AuthService
     with SprayJsonSupport
-    with CompetitionProtocols {
+    with Protocols {
 
   def config: Config
+
+  val unsecuredRoutes: Route = {
+    (pathPrefix("login") & post & pathEndOrSingleSlash & entity(as[LoginRequest])) { login =>
+      onSuccess(getAccessToken(login.username, login.password)) {
+        case AccessToken(jwt) => respondWithHeader(RawHeader("Access-Token", jwt)) { complete(StatusCodes.OK) }
+        case InvalidCredentials() => complete(StatusCodes.Unauthorized -> "Invalid credentials")
+      }
+    }
+  }
 
   val routes: Route = {
     logRequestResult("competition-api") {

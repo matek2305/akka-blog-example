@@ -1,32 +1,12 @@
 package com.github.matek2305.djamoe.restapi
 
-import java.time.LocalDateTime
+sealed trait CompetitionRestApiRequest
 
-import com.github.matek2305.djamoe.domain.{MatchId, Score}
+object CompetitionRestApiRequest {
 
-sealed trait CompetitionRestApiResponse
-
-object CompetitionRestApiResponse {
-
-  final case class MatchResponse(
-      id: MatchId,
-      status: String,
-      homeTeamName: String,
-      awayTeamName: String,
-      startDate: LocalDateTime,
-      result: Option[Score],
-      bet: Option[Score],
-      points: Int
-  )
-    extends CompetitionRestApiResponse
-
-  final case class GetMatchesResponse(matches: List[MatchResponse])
-    extends CompetitionRestApiResponse
-
-  final case class PlayerPoints(name: String, points: Int)
-    extends CompetitionRestApiResponse
-
-  final case class GetPointsResponse(players: List[PlayerPoints])
-    extends CompetitionRestApiResponse
+  final case class LoginRequest(username: String, password: String)
+    extends CompetitionRestApiRequest
 
 }
+
+

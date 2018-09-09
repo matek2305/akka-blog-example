@@ -4,12 +4,12 @@ import java.util.concurrent.TimeUnit
 
 import akka.actor.{Actor, Props}
 import authentikat.jwt.{JsonWebToken, JwtClaimsSet, JwtHeader}
-import com.github.matek2305.djamoe.auth.AuthService._
+import com.github.matek2305.djamoe.auth.AuthActor._
 import com.typesafe.config.ConfigFactory
 import org.mindrot.jbcrypt.BCrypt
 import org.mindrot.jbcrypt.BCrypt.{checkpw, hashpw}
 
-class AuthService extends Actor {
+class AuthActor extends Actor {
 
   private val config = ConfigFactory.load()
   private val header = JwtHeader("HS256")
@@ -68,7 +68,7 @@ class AuthService extends Actor {
   )
 }
 
-object AuthService {
+object AuthActor {
 
   sealed trait Request
 
@@ -90,5 +90,5 @@ object AuthService {
 
   final case class ValidationFailed() extends ValidateAccessTokenResponse
 
-  def props() = Props(new AuthService)
+  def props() = Props(new AuthActor)
 }
