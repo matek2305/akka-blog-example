@@ -6,6 +6,8 @@ mainClass := Some("com.github.matek2305.djamoe.WebServer")
 
 scalaVersion := "2.12.6"
 
+dockerBaseImage := "openjdk:jre-alpine"
+
 libraryDependencies ++= {
   val akkaVersion = "2.5.2"
   val akkaHttpVersion = "10.1.3"
@@ -32,3 +34,4 @@ resolvers += Resolver.jcenterRepo
 
 enablePlugins(JavaAppPackaging)
 enablePlugins(DockerPlugin)
+enablePlugins(AshScriptPlugin)
