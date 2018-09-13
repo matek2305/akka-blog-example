@@ -29,3 +29,6 @@ libraryDependencies ++= {
 }
 
 resolvers += Resolver.jcenterRepo
+
+enablePlugins(JavaAppPackaging)
+enablePlugins(DockerPlugin)
