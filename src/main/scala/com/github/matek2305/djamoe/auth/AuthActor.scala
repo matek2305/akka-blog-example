@@ -2,7 +2,8 @@ package com.github.matek2305.djamoe.auth
 
 import java.util.concurrent.TimeUnit
 
-import akka.actor.{Actor, Props}
+import akka.actor.{DiagnosticActorLogging, Props}
+import akka.persistence.{PersistentActor, RecoveryCompleted}
 import authentikat.jwt.{JsonWebToken, JwtClaimsSet, JwtHeader}
 import com.github.matek2305.djamoe.auth.AuthActorCommand.Register
 import com.github.matek2305.djamoe.auth.AuthActorQuery.{GetAccessToken, ValidateAccessToken}
@@ -10,23 +11,26 @@ import com.github.matek2305.djamoe.auth.GetAccessTokenResponse.{AccessToken, Inv
 import com.github.matek2305.djamoe.auth.RegisterResponse.{UserRegistered, UsernameTaken}
 import com.github.matek2305.djamoe.auth.ValidateAccessTokenResponse.{TokenExpired, TokenIsValid, ValidationFailed}
 import com.typesafe.config.ConfigFactory
-import org.mindrot.jbcrypt.BCrypt
 import org.mindrot.jbcrypt.BCrypt.{checkpw, gensalt, hashpw}
 
-class AuthActor extends Actor {
+class AuthActor(id: String) extends PersistentActor with DiagnosticActorLogging {
 
   private val config = ConfigFactory.load()
   private val header = JwtHeader("HS256")
 
   private var users = Map.empty[String, String]
 
-  override def receive: Receive = {
+  override def persistenceId: String = id
+
+  override def receiveCommand: Receive = {
     case Register(username, _) if users.contains(username) =>
       sender() ! UsernameTaken(username)
 
     case Register(username, password) =>
-      users += (username -> hashpw(password, gensalt()))
-      sender() ! UserRegistered(username, users(username))
+      persist(UserRegistered(username, hashpw(password, gensalt()))) { registered =>
+        users += (username -> registered.password)
+        sender() ! registered
+      }
 
     case GetAccessToken(username, password) if validCredentials(username, password) =>
       sender() ! AccessToken(JsonWebToken(header, setClaims(username), config.getString("auth.jwt-secret")))
@@ -42,6 +46,12 @@ class AuthActor extends Actor {
 
     case ValidateAccessToken(_) =>
       sender() ! ValidationFailed
+  }
+
+  override def receiveRecover: Receive = {
+    case registered: UserRegistered =>
+      users += (registered.username -> registered.password)
+    case RecoveryCompleted => log.info("Recovery completed!")
   }
 
   private def validCredentials(username: String, password: String) = users.get(username) match {
@@ -74,5 +84,5 @@ class AuthActor extends Actor {
 }
 
 object AuthActor {
-  def props() = Props(new AuthActor)
+  def props(id: String) = Props(new AuthActor(id))
 }

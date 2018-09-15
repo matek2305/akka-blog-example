@@ -23,7 +23,7 @@ object WebServer extends App with RestApi {
   override def config: Config = ConfigFactory.load()
 
   override def competitionActor: ActorRef = system.actorOf(CompetitionActor.props("competition1"))
-  override def authActor: ActorRef = system.actorOf(AuthActor.props())
+  override def authActor: ActorRef = system.actorOf(AuthActor.props("users"))
 
   val interface = config.getString("http.interface")
   val port = config.getInt("http.port")
