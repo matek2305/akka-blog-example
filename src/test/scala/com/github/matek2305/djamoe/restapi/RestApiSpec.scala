@@ -10,7 +10,8 @@ import akka.testkit.TestProbe
 import akka.util.Timeout
 import com.github.matek2305.djamoe.app.CompetitionActorQuery.{GetAllMatches, GetPoints}
 import com.github.matek2305.djamoe.app.CompetitionActorResponse.CommandProcessed
-import com.github.matek2305.djamoe.auth.AuthActor.{TokenIsValid, ValidateAccessToken}
+import com.github.matek2305.djamoe.auth.AuthActorQuery.ValidateAccessToken
+import com.github.matek2305.djamoe.auth.ValidateAccessTokenResponse.TokenIsValid
 import com.github.matek2305.djamoe.domain.CompetitionCommand.{AddMatch, FinishMatch, MakeBet}
 import com.github.matek2305.djamoe.domain.CompetitionEvent.{BetMade, MatchAdded, MatchFinished}
 import com.github.matek2305.djamoe.domain.{Match, MatchId, Score}

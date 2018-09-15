@@ -3,7 +3,8 @@ package com.github.matek2305.djamoe.auth
 import akka.actor.ActorSystem
 import akka.testkit.{ImplicitSender, TestKit}
 import authentikat.jwt.JsonWebToken
-import com.github.matek2305.djamoe.auth.AuthActor.{AccessToken, GetAccessToken, InvalidCredentials}
+import com.github.matek2305.djamoe.auth.AuthActorQuery.GetAccessToken
+import com.github.matek2305.djamoe.auth.GetAccessTokenResponse.{AccessToken, InvalidCredentials}
 import com.typesafe.config.ConfigFactory
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 

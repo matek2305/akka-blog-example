@@ -4,7 +4,7 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.stream.Materializer
 import akka.util.Timeout
-import com.github.matek2305.djamoe.auth.AuthActor.{GetAccessToken, GetAccessTokenResponse, ValidateAccessToken, ValidateAccessTokenResponse}
+import com.github.matek2305.djamoe.auth.AuthActorQuery.{GetAccessToken, ValidateAccessToken}
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 

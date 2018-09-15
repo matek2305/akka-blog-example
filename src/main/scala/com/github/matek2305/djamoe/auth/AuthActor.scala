@@ -4,7 +4,9 @@ import java.util.concurrent.TimeUnit
 
 import akka.actor.{Actor, Props}
 import authentikat.jwt.{JsonWebToken, JwtClaimsSet, JwtHeader}
-import com.github.matek2305.djamoe.auth.AuthActor._
+import com.github.matek2305.djamoe.auth.AuthActorQuery.{GetAccessToken, ValidateAccessToken}
+import com.github.matek2305.djamoe.auth.GetAccessTokenResponse.{AccessToken, InvalidCredentials}
+import com.github.matek2305.djamoe.auth.ValidateAccessTokenResponse.{TokenExpired, TokenIsValid, ValidationFailed}
 import com.typesafe.config.ConfigFactory
 import org.mindrot.jbcrypt.BCrypt
 import org.mindrot.jbcrypt.BCrypt.{checkpw, hashpw}
@@ -69,26 +71,5 @@ class AuthActor extends Actor {
 }
 
 object AuthActor {
-
-  sealed trait Request
-
-  final case class GetAccessToken(username: String, password: String)
-
-  final case class ValidateAccessToken(jwt: String)
-
-  sealed trait GetAccessTokenResponse
-
-  final case class AccessToken(token: String) extends GetAccessTokenResponse
-
-  final case object InvalidCredentials extends GetAccessTokenResponse
-
-  sealed trait ValidateAccessTokenResponse
-
-  final case class TokenIsValid(claims: Map[String, Any]) extends ValidateAccessTokenResponse
-
-  final case object TokenExpired extends ValidateAccessTokenResponse
-
-  final case object ValidationFailed extends ValidateAccessTokenResponse
-
   def props() = Props(new AuthActor)
 }
