@@ -9,7 +9,7 @@ import com.github.matek2305.djamoe.auth.AuthActorCommand.Register
 import com.github.matek2305.djamoe.auth.AuthActorQuery.GetAccessToken
 import com.github.matek2305.djamoe.auth.AuthActorSpec.Test
 import com.github.matek2305.djamoe.auth.GetAccessTokenResponse.{AccessToken, InvalidCredentials}
-import com.github.matek2305.djamoe.auth.RegisterResponse.UserRegistered
+import com.github.matek2305.djamoe.auth.RegisterResponse.{UserRegistered, UsernameTaken}
 import com.typesafe.config.ConfigFactory
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
@@ -62,6 +62,14 @@ class AuthActorSpec
     "return invalid credentials message for not registered user" in new Test {
       authActor ! GetAccessToken("user", "password")
       expectMsg(InvalidCredentials)
+    }
+
+    "prevent to register more than one user with same username" in new Test {
+      authActor ! Register("user", "password")
+      expectMsgType[UserRegistered]
+
+      authActor ! Register("user", "pass")
+      expectMsg(UsernameTaken("user"))
     }
   }
 }

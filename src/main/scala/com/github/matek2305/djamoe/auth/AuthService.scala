@@ -4,6 +4,7 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.stream.Materializer
 import akka.util.Timeout
+import com.github.matek2305.djamoe.auth.AuthActorCommand.Register
 import com.github.matek2305.djamoe.auth.AuthActorQuery.{GetAccessToken, ValidateAccessToken}
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
@@ -17,6 +18,9 @@ trait AuthService {
   implicit def executor: ExecutionContextExecutor
 
   def authActor: ActorRef
+
+  def register(username: String, password: String): Future[RegisterResponse] =
+    (authActor ? Register(username, password)).mapTo[RegisterResponse]
 
   def getAccessToken(username: String, password: String): Future[GetAccessTokenResponse] =
     (authActor ? GetAccessToken(username, password)).mapTo[GetAccessTokenResponse]

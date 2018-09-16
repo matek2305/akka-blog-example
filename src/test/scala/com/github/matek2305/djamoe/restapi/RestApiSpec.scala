@@ -10,11 +10,14 @@ import akka.testkit.TestProbe
 import akka.util.Timeout
 import com.github.matek2305.djamoe.app.CompetitionActorQuery.{GetAllMatches, GetPoints}
 import com.github.matek2305.djamoe.app.CompetitionActorResponse.CommandProcessed
+import com.github.matek2305.djamoe.auth.AuthActorCommand.Register
 import com.github.matek2305.djamoe.auth.AuthActorQuery.ValidateAccessToken
+import com.github.matek2305.djamoe.auth.RegisterResponse.UserRegistered
 import com.github.matek2305.djamoe.auth.ValidateAccessTokenResponse.TokenIsValid
 import com.github.matek2305.djamoe.domain.CompetitionCommand.{AddMatch, FinishMatch, MakeBet}
 import com.github.matek2305.djamoe.domain.CompetitionEvent.{BetMade, MatchAdded, MatchFinished}
 import com.github.matek2305.djamoe.domain.{Match, MatchId, Score}
+import com.github.matek2305.djamoe.restapi.RestApiRequest.RegisterRequest
 import com.github.matek2305.djamoe.restapi.RestApiResponse.{GetMatchesResponse, GetPointsResponse, MatchResponse, PlayerPoints}
 import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest.concurrent.Eventually
@@ -149,6 +152,16 @@ class RestApiSpec extends FlatSpec
       eventually { status shouldEqual StatusCodes.OK }
 
       responseAs[BetMade] shouldEqual BetMade(matchId, loggedUser, bet)
+    }
+  }
+
+  it should "register user when POST to /register" in {
+    val request = RegisterRequest("user", "password")
+    Post("/register", HttpEntity(ContentTypes.`application/json`, request.toJson.toString)) ~> unsecuredRoutes ~> check {
+      authProbe.expectMsg(Register("user", "password"))
+      authProbe.reply(UserRegistered("user", "password"))
+
+      eventually { status shouldEqual StatusCodes.OK }
     }
   }
 }

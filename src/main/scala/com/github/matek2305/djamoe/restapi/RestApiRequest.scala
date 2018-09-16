@@ -7,6 +7,9 @@ object RestApiRequest {
   final case class LoginRequest(username: String, password: String)
     extends RestApiRequest
 
+  final case class RegisterRequest(username: String, password: String)
+    extends RestApiRequest
+
 }
 
 

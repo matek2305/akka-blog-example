@@ -8,10 +8,11 @@ import com.github.matek2305.djamoe.app.CompetitionService
 import com.github.matek2305.djamoe.auth.AuthActor._
 import com.github.matek2305.djamoe.auth.AuthService
 import com.github.matek2305.djamoe.auth.GetAccessTokenResponse.{AccessToken, InvalidCredentials}
+import com.github.matek2305.djamoe.auth.RegisterResponse.{UserRegistered, UsernameTaken}
 import com.github.matek2305.djamoe.auth.ValidateAccessTokenResponse.{TokenExpired, TokenIsValid, ValidationFailed}
 import com.github.matek2305.djamoe.domain.CompetitionCommand.AddMatch
 import com.github.matek2305.djamoe.domain.{MatchId, Score}
-import com.github.matek2305.djamoe.restapi.RestApiRequest.LoginRequest
+import com.github.matek2305.djamoe.restapi.RestApiRequest.{LoginRequest, RegisterRequest}
 import com.github.matek2305.djamoe.restapi.RestApiResponse._
 import com.typesafe.config.Config
 
@@ -29,7 +30,13 @@ trait RestApi
         case AccessToken(jwt) => complete(StatusCodes.OK -> LoginResponse(jwt))
         case InvalidCredentials => complete(StatusCodes.Unauthorized -> "Invalid credentials")
       }
-    }
+    } ~
+      (pathPrefix("register") & post & pathEndOrSingleSlash & entity(as[RegisterRequest])) { request =>
+        onSuccess(register(request.username, request.password)) {
+          case UserRegistered(_, _) => complete(StatusCodes.OK)
+          case UsernameTaken(_) => complete(StatusCodes.BadRequest -> "Username already taken")
+        }
+      }
   }
 
   val routes: Route = {

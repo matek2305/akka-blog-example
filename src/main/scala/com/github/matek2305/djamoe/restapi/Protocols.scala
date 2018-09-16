@@ -7,7 +7,7 @@ import java.util.UUID
 import com.github.matek2305.djamoe.domain.CompetitionCommand.{AddMatch, FinishMatch}
 import com.github.matek2305.djamoe.domain.CompetitionEvent.{BetMade, MatchAdded, MatchFinished}
 import com.github.matek2305.djamoe.domain.{MatchId, Score}
-import com.github.matek2305.djamoe.restapi.RestApiRequest.LoginRequest
+import com.github.matek2305.djamoe.restapi.RestApiRequest.{LoginRequest, RegisterRequest}
 import com.github.matek2305.djamoe.restapi.RestApiResponse._
 import spray.json.{DefaultJsonProtocol, DeserializationException, JsString, JsValue, RootJsonFormat}
 
@@ -51,4 +51,6 @@ trait Protocols extends DefaultJsonProtocol {
 
   implicit val loginRequestFormat: RootJsonFormat[LoginRequest] = jsonFormat2(LoginRequest)
   implicit val loginResponseFormat: RootJsonFormat[LoginResponse] = jsonFormat1(LoginResponse)
+
+  implicit val registerRequestFormat: RootJsonFormat[RegisterRequest] = jsonFormat2(RegisterRequest)
 }
