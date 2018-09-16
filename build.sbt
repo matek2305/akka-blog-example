@@ -1,6 +1,6 @@
 name := "djamoe-betting-engine"
 organization := "com.github.matek2305"
-version := "1.0"
+version := "1.0-SNAPSHOT"
 
 mainClass := Some("com.github.matek2305.djamoe.WebServer")
 
