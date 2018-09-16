@@ -5,7 +5,6 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{Directive1, Route}
 import com.github.matek2305.djamoe.app.CompetitionService
-import com.github.matek2305.djamoe.auth.AuthActor._
 import com.github.matek2305.djamoe.auth.AuthService
 import com.github.matek2305.djamoe.auth.GetAccessTokenResponse.{AccessToken, InvalidCredentials}
 import com.github.matek2305.djamoe.auth.RegisterResponse.{UserRegistered, UsernameTaken}
