@@ -30,19 +30,19 @@ final case class Match(
   )
 
   private def calculatePoints(bet: Score, score: Score): Int = (bet, score) match {
-    case (bet, score) if bet == score => Points.EXACT_BET
-    case (bet, score) if bet.isDraw && score.isDraw => Points.DRAW
-    case (bet, score) if bet.homeTeamWin && score.homeTeamWin => Points.HOME_TEAM_WIN
-    case (bet, score) if bet.awayTeamWin && score.awayTeamWin => Points.AWAY_TEAM_WIN
-    case _ => Points.MISSED_BET
+    case (bet, score) if bet == score => Points.ExactBet
+    case (bet, score) if bet.isDraw && score.isDraw => Points.Draw
+    case (bet, score) if bet.homeTeamWin && score.homeTeamWin => Points.HomeTeamWon
+    case (bet, score) if bet.awayTeamWin && score.awayTeamWin => Points.AwayTeamWon
+    case _ => Points.MissedBet
   }
 
   private object Points {
-    val EXACT_BET = 5
-    val DRAW = 2
-    val HOME_TEAM_WIN = 2
-    val AWAY_TEAM_WIN = 2
-    val MISSED_BET = 0
+    val ExactBet = 5
+    val Draw = 2
+    val HomeTeamWon = 2
+    val AwayTeamWon = 2
+    val MissedBet = 0
   }
 }
 
