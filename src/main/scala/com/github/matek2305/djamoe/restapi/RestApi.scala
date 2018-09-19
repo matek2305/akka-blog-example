@@ -30,18 +30,16 @@ trait RestApi
         case InvalidCredentials => complete(StatusCodes.Unauthorized -> "Invalid credentials")
       }
     } ~
-      (pathPrefix("register") & post & pathEndOrSingleSlash & entity(as[RegisterRequest])) { request =>
-        // TODO: proper validation instead of stupid if else if
-        if (request.username.length < 4) {
+      (pathPrefix("register") & post & pathEndOrSingleSlash & entity(as[RegisterRequest])) {
+        case RegisterRequest(username, _) if username.length < 4 =>
           complete(StatusCodes.BadRequest -> "Username must have at least 4 chars")
-        } else if(request.password.length < 8) {
+        case RegisterRequest(_, password) if password.length < 8 =>
           complete(StatusCodes.BadRequest -> "Password must have at least 8 chars")
-        } else {
-          onSuccess(register(request.username, request.password)) {
+        case RegisterRequest(username, password) =>
+          onSuccess(register(username, password)) {
             case UserRegistered(_, _) => complete(StatusCodes.OK)
             case UsernameTaken(_) => complete(StatusCodes.BadRequest -> "Username already taken")
           }
-        }
       }
   }
 
