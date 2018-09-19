@@ -164,4 +164,18 @@ class RestApiSpec extends FlatSpec
       eventually { status shouldEqual StatusCodes.OK }
     }
   }
+
+  it should "return BAD REQUEST for too short username when POST to /register" in {
+    val request = RegisterRequest("u", "password")
+    Post("/register", HttpEntity(ContentTypes.`application/json`, request.toJson.toString)) ~> unsecuredRoutes ~> check {
+      status shouldEqual StatusCodes.BadRequest
+    }
+  }
+
+  it should "return BAD REQUEST for too short password when POST to /register" in {
+    val request = RegisterRequest("user", "pass")
+    Post("/register", HttpEntity(ContentTypes.`application/json`, request.toJson.toString)) ~> unsecuredRoutes ~> check {
+      status shouldEqual StatusCodes.BadRequest
+    }
+  }
 }
