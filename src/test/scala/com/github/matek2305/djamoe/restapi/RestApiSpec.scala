@@ -8,7 +8,7 @@ import akka.http.scaladsl.model.{ContentTypes, HttpEntity, StatusCodes}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.TestProbe
 import akka.util.Timeout
-import com.github.matek2305.djamoe.app.CompetitionActorQuery.{GetAllMatches, GetPoints}
+import com.github.matek2305.djamoe.app.CompetitionActorQuery.{GetAllMatches, GetMatch, GetPoints}
 import com.github.matek2305.djamoe.app.CompetitionActorResponse.CommandProcessed
 import com.github.matek2305.djamoe.auth.AuthActorCommand.Register
 import com.github.matek2305.djamoe.auth.AuthActorQuery.ValidateAccessToken
@@ -176,6 +176,43 @@ class RestApiSpec extends FlatSpec
     val request = RegisterRequest("user", "pass")
     Post("/register", HttpEntity(ContentTypes.`application/json`, request.toJson.toString)) ~> unsecuredRoutes ~> check {
       status shouldEqual StatusCodes.BadRequest
+    }
+  }
+
+  it should "return match when GET /matches/:id" in {
+    val matchId = MatchId()
+    Get(s"/matches/$matchId") ~> RawHeader("Authorization", "token") ~> routes ~> check {
+      authProbe.expectMsg(ValidateAccessToken("token"))
+      authProbe.reply(TokenIsValid(Map("user" -> "user")))
+
+      probe.expectMsg(GetMatch(matchId))
+      probe.reply(Some(Match("France", "Belgium", LocalDateTime.of(2018, Month.JULY, 10, 20, 0))))
+
+      eventually { status shouldEqual StatusCodes.OK }
+
+      responseAs[MatchResponse] shouldEqual MatchResponse(
+        matchId,
+        "CREATED",
+        "France",
+        "Belgium",
+        LocalDateTime.of(2018, Month.JULY, 10, 20, 0),
+        None,
+        None,
+        0
+      )
+    }
+  }
+
+  it should "return NOT FOUND when GET /matches/:id with id that does not exist" in {
+    val matchId = MatchId()
+    Get(s"/matches/$matchId") ~> RawHeader("Authorization", "token") ~> routes ~> check {
+      authProbe.expectMsg(ValidateAccessToken("token"))
+      authProbe.reply(TokenIsValid(Map("user" -> "user")))
+
+      probe.expectMsg(GetMatch(matchId))
+      probe.reply(None)
+
+      eventually { status shouldEqual StatusCodes.NotFound }
     }
   }
 }
