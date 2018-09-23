@@ -18,7 +18,7 @@ import com.github.matek2305.djamoe.domain.CompetitionCommand.{AddMatch, FinishMa
 import com.github.matek2305.djamoe.domain.CompetitionEvent.{BetMade, MatchAdded, MatchFinished}
 import com.github.matek2305.djamoe.domain.{Match, MatchId, Score}
 import com.github.matek2305.djamoe.restapi.RestApiRequest.RegisterRequest
-import com.github.matek2305.djamoe.restapi.RestApiResponse.{GetMatchesResponse, GetPointsResponse, MatchResponse, PlayerPoints}
+import com.github.matek2305.djamoe.restapi.RestApiResponse._
 import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest.concurrent.Eventually
 import org.scalatest.time.{Millis, Seconds, Span}
@@ -190,15 +190,17 @@ class RestApiSpec extends FlatSpec
 
       eventually { status shouldEqual StatusCodes.OK }
 
-      responseAs[MatchResponse] shouldEqual MatchResponse(
-        matchId,
-        "CREATED",
-        "France",
-        "Belgium",
-        LocalDateTime.of(2018, Month.JULY, 10, 20, 0),
-        None,
-        None,
-        0
+      responseAs[GetMatchResponse] shouldEqual GetMatchResponse(
+        MatchResponse(
+          matchId,
+          "CREATED",
+          "France",
+          "Belgium",
+          LocalDateTime.of(2018, Month.JULY, 10, 20, 0),
+          None,
+          None,
+          0
+        )
       )
     }
   }

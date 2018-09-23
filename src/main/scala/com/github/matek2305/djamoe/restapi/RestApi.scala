@@ -69,16 +69,19 @@ trait RestApi
           } ~
             pathPrefix(JavaUUID.map(MatchId(_))) { matchId =>
               onSuccess(matchById(matchId)) {
-                case Some(foundMatch) => complete(StatusCodes.OK -> MatchResponse(
-                  matchId,
-                  foundMatch.status.toString,
-                  foundMatch.homeTeamName,
-                  foundMatch.awayTeamName,
-                  foundMatch.startDate,
-                  foundMatch.result,
-                  foundMatch.bets.get(username).map(_.score),
-                  foundMatch.bets.get(username).map(_.points).getOrElse(0)
-                ))
+                case Some(foundMatch) =>
+                  val matchResponse = MatchResponse(
+                    matchId,
+                    foundMatch.status.toString,
+                    foundMatch.homeTeamName,
+                    foundMatch.awayTeamName,
+                    foundMatch.startDate,
+                    foundMatch.result,
+                    foundMatch.bets.get(username).map(_.score),
+                    foundMatch.bets.get(username).map(_.points).getOrElse(0)
+                  )
+
+                  complete(StatusCodes.OK -> GetMatchResponse(matchResponse))
                 case None => complete(StatusCodes.NotFound -> s"Match with id=$matchId not found")
               }
             }

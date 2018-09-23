@@ -23,6 +23,9 @@ object RestApiResponse {
   )
     extends RestApiResponse
 
+  final case class GetMatchResponse(`match`: MatchResponse)
+    extends RestApiResponse
+
   final case class GetMatchesResponse(matches: List[MatchResponse])
     extends RestApiResponse
 
