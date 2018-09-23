@@ -5,7 +5,7 @@ import java.util.UUID
 
 import akka.actor.{ActorRef, ActorSystem, PoisonPill}
 import akka.testkit.{ImplicitSender, TestKit}
-import com.github.matek2305.djamoe.app.CompetitionActorQuery.{GetAllMatches, GetPoints}
+import com.github.matek2305.djamoe.app.CompetitionActorQuery.{GetAllMatches, GetMatch, GetPoints}
 import com.github.matek2305.djamoe.app.CompetitionActorResponse.{CommandProcessed, CommandProcessingFailed}
 import com.github.matek2305.djamoe.app.CompetitionActorSpec.Test
 import com.github.matek2305.djamoe.domain.CompetitionCommand.{AddMatch, FinishMatch, LockBetting, MakeBet}
@@ -273,6 +273,23 @@ class CompetitionActorSpec
           Some(Score(2, 2))
         )
       ))
+    }
+
+    "return match by its id" in new Test {
+      competitionActor ! sampleAddMatchCommand
+      val matchId: MatchId = expectMsgType[CommandProcessed].event.matchId
+
+      competitionActor ! GetMatch(matchId)
+      expectMsg(Some(Match(
+        sampleAddMatchCommand.homeTeamName,
+        sampleAddMatchCommand.awayTeamName,
+        sampleAddMatchCommand.startDate
+      )))
+    }
+
+    "return None when match with given id does not exist" in new Test {
+      competitionActor ! GetMatch(MatchId())
+      expectMsg(None)
     }
   }
 }

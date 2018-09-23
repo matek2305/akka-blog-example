@@ -46,25 +46,42 @@ trait RestApi
   val routes: Route = {
     (authenticated & logRequestResult("competition-api")) { username =>
       pathPrefix("matches") {
-        (get & pathEndOrSingleSlash) {
-          onSuccess(allMatches) { matchesMap =>
-            val matches = matchesMap
-              .map {
-                case (id, entry) => MatchResponse(
-                  id,
-                  entry.status.toString,
-                  entry.homeTeamName,
-                  entry.awayTeamName,
-                  entry.startDate,
-                  entry.result,
-                  entry.bets.get(username).map(_.score),
-                  entry.bets.get(username).map(_.points).getOrElse(0)
-                )
-              }
-              .toList
+        get {
+          pathEndOrSingleSlash {
+            onSuccess(allMatches) { matchesMap =>
+              val matches = matchesMap
+                .map {
+                  case (id, entry) => MatchResponse(
+                    id,
+                    entry.status.toString,
+                    entry.homeTeamName,
+                    entry.awayTeamName,
+                    entry.startDate,
+                    entry.result,
+                    entry.bets.get(username).map(_.score),
+                    entry.bets.get(username).map(_.points).getOrElse(0)
+                  )
+                }
+                .toList
 
-            complete(StatusCodes.OK -> GetMatchesResponse(matches))
-          }
+              complete(StatusCodes.OK -> GetMatchesResponse(matches))
+            }
+          } ~
+            pathPrefix(JavaUUID.map(MatchId(_))) { matchId =>
+              onSuccess(matchById(matchId)) {
+                case Some(foundMatch) => complete(StatusCodes.OK -> MatchResponse(
+                  matchId,
+                  foundMatch.status.toString,
+                  foundMatch.homeTeamName,
+                  foundMatch.awayTeamName,
+                  foundMatch.startDate,
+                  foundMatch.result,
+                  foundMatch.bets.get(username).map(_.score),
+                  foundMatch.bets.get(username).map(_.points).getOrElse(0)
+                ))
+                case None => complete(StatusCodes.NotFound -> s"Match with id=$matchId not found")
+              }
+            }
         } ~
           post {
             (pathEndOrSingleSlash & entity(as[AddMatch])) { command =>

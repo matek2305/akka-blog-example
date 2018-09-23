@@ -2,7 +2,7 @@ package com.github.matek2305.djamoe.app
 
 import akka.actor.{ActorRef, DiagnosticActorLogging, Props}
 import akka.persistence.{PersistentActor, RecoveryCompleted}
-import com.github.matek2305.djamoe.app.CompetitionActorQuery.{GetAllMatches, GetPoints}
+import com.github.matek2305.djamoe.app.CompetitionActorQuery.{GetAllMatches, GetMatch, GetPoints}
 import com.github.matek2305.djamoe.app.CompetitionActorResponse.{CommandProcessed, CommandProcessingFailed}
 import com.github.matek2305.djamoe.domain.{Competition, CompetitionCommand, CompetitionEvent}
 
@@ -16,6 +16,7 @@ class CompetitionActor(id: String) extends PersistentActor with DiagnosticActorL
 
   override def receiveCommand: Receive = {
     case command: CompetitionCommand => process(sender(), command)
+    case GetMatch(matchId) => sender() ! competition.matches.get(matchId)
     case GetAllMatches => sender() ! competition.matches
     case GetPoints => sender() ! competition.pointsMap
   }

@@ -4,7 +4,7 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.stream.Materializer
 import akka.util.Timeout
-import com.github.matek2305.djamoe.app.CompetitionActorQuery.{GetAllMatches, GetPoints}
+import com.github.matek2305.djamoe.app.CompetitionActorQuery.{GetAllMatches, GetMatch, GetPoints}
 import com.github.matek2305.djamoe.app.CompetitionActorResponse.CommandProcessed
 import com.github.matek2305.djamoe.domain.CompetitionCommand.{AddMatch, FinishMatch, MakeBet}
 import com.github.matek2305.djamoe.domain.CompetitionEvent.{BetMade, MatchAdded, MatchFinished}
@@ -24,6 +24,10 @@ trait CompetitionService {
 
   def allMatches: Future[Map[MatchId, Match]] = {
     (competitionActor ? GetAllMatches).mapTo[Map[MatchId, Match]]
+  }
+
+  def matchById(id: MatchId): Future[Option[Match]] = {
+    (competitionActor ? GetMatch(id)).mapTo[Option[Match]]
   }
 
   def points: Future[Map[String, Int]] = {
