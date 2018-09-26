@@ -46,7 +46,8 @@ trait Protocols extends DefaultJsonProtocol {
   implicit val playerPointsFormat: RootJsonFormat[PlayerPoints] = jsonFormat2(PlayerPoints)
   implicit val getPointsResponseFormat: RootJsonFormat[GetPointsResponse] = jsonFormat1(GetPointsResponse)
 
-  implicit val matchResponseFormat: RootJsonFormat[MatchResponse] = jsonFormat8(MatchResponse)
+  implicit val betEntryFormat: RootJsonFormat[BetEntry] = jsonFormat3(BetEntry)
+  implicit val matchResponseFormat: RootJsonFormat[MatchResponse] = jsonFormat9(MatchResponse)
   implicit val getMatchResponseFormat: RootJsonFormat[GetMatchResponse] = jsonFormat1(GetMatchResponse)
   implicit val getMatchesResponseFormat: RootJsonFormat[GetMatchesResponse] = jsonFormat1(GetMatchesResponse)
 

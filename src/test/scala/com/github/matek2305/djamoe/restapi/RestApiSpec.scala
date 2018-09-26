@@ -16,7 +16,7 @@ import com.github.matek2305.djamoe.auth.RegisterResponse.UserRegistered
 import com.github.matek2305.djamoe.auth.ValidateAccessTokenResponse.TokenIsValid
 import com.github.matek2305.djamoe.domain.CompetitionCommand.{AddMatch, FinishMatch, MakeBet}
 import com.github.matek2305.djamoe.domain.CompetitionEvent.{BetMade, MatchAdded, MatchFinished}
-import com.github.matek2305.djamoe.domain.{Match, MatchId, Score}
+import com.github.matek2305.djamoe.domain.{Bet, Match, MatchId, Score}
 import com.github.matek2305.djamoe.restapi.RestApiRequest.RegisterRequest
 import com.github.matek2305.djamoe.restapi.RestApiResponse._
 import com.typesafe.config.{Config, ConfigFactory}
@@ -47,17 +47,33 @@ class RestApiSpec extends FlatSpec
     interval = scaled(Span(50, Millis))
   )
 
+  val loggedUser = "bar"
+  val loggedUserBet = Score(2, 1)
+
+  val createdMatch = Match(
+    "France",
+    "Belgium",
+    LocalDateTime.of(2018, Month.JULY, 10, 20, 0),
+    bets = Map(
+      "foo" -> Bet(Score(2, 2)),
+      "bar" -> Bet(Score(2, 1)),
+      "baz" -> Bet(Score(0, 2)),
+    )
+  )
+
+  val lockedMatch: Match = createdMatch.copy(status = Match.LOCKED)
+  val finishedMatch: Match = createdMatch.copy(status = Match.FINISHED, result = Some(Score(2, 1)))
+
   "rest api" should "return list of all matches when GET /matches" in {
     Get("/matches") ~> RawHeader("Authorization", "token") ~> routes ~> check {
       authProbe.expectMsg(ValidateAccessToken("token"))
-      authProbe.reply(TokenIsValid(Map("user" -> "user")))
+      authProbe.reply(TokenIsValid(Map("user" -> loggedUser)))
 
       probe.expectMsg(GetAllMatches)
 
       val matchId = MatchId()
-      val matchDetails = Match("France", "Belgium", LocalDateTime.of(2018, Month.JULY, 10, 20, 0))
 
-      probe.reply(Map(matchId -> matchDetails))
+      probe.reply(Map(matchId -> createdMatch))
 
       eventually { status shouldEqual StatusCodes.OK }
 
@@ -66,12 +82,10 @@ class RestApiSpec extends FlatSpec
           MatchResponse(
             matchId,
             "CREATED",
-            matchDetails.homeTeamName,
-            matchDetails.awayTeamName,
-            matchDetails.startDate,
-            None,
-            None,
-            0
+            createdMatch.homeTeamName,
+            createdMatch.awayTeamName,
+            createdMatch.startDate,
+            bet = Some(loggedUserBet)
           )
         )
       )
@@ -179,27 +193,82 @@ class RestApiSpec extends FlatSpec
     }
   }
 
-  it should "return match when GET /matches/:id" in {
+  it should "return CREATED match when GET /matches/:id" in {
     val matchId = MatchId()
     Get(s"/matches/$matchId") ~> RawHeader("Authorization", "token") ~> routes ~> check {
       authProbe.expectMsg(ValidateAccessToken("token"))
-      authProbe.reply(TokenIsValid(Map("user" -> "user")))
+      authProbe.reply(TokenIsValid(Map("user" -> loggedUser)))
 
       probe.expectMsg(GetMatch(matchId))
-      probe.reply(Some(Match("France", "Belgium", LocalDateTime.of(2018, Month.JULY, 10, 20, 0))))
+      probe.reply(Some(createdMatch))
 
       eventually { status shouldEqual StatusCodes.OK }
 
       responseAs[GetMatchResponse] shouldEqual GetMatchResponse(
         MatchResponse(
           matchId,
-          "CREATED",
-          "France",
-          "Belgium",
-          LocalDateTime.of(2018, Month.JULY, 10, 20, 0),
-          None,
-          None,
-          0
+          createdMatch.status.toString,
+          createdMatch.homeTeamName,
+          createdMatch.awayTeamName,
+          createdMatch.startDate,
+          bet = Some(loggedUserBet)
+        )
+      )
+    }
+  }
+
+  it should "return LOCKED match when GET /matches/:id" in {
+    val matchId = MatchId()
+    Get(s"/matches/$matchId") ~> RawHeader("Authorization", "token") ~> routes ~> check {
+      authProbe.expectMsg(ValidateAccessToken("token"))
+      authProbe.reply(TokenIsValid(Map("user" -> loggedUser)))
+
+      probe.expectMsg(GetMatch(matchId))
+      probe.reply(Some(lockedMatch))
+
+      eventually { status shouldEqual StatusCodes.OK }
+
+      responseAs[GetMatchResponse] shouldEqual GetMatchResponse(
+        MatchResponse(
+          matchId,
+          lockedMatch.status.toString,
+          lockedMatch.homeTeamName,
+          lockedMatch.awayTeamName,
+          lockedMatch.startDate,
+          bet = Some(loggedUserBet),
+          otherBets = List(
+            BetEntry("foo", Score(2, 2), 0),
+            BetEntry("baz", Score(0, 2), 0)
+          )
+        )
+      )
+    }
+  }
+
+  it should "return FINISHED match when GET /matches/:id" in {
+    val matchId = MatchId()
+    Get(s"/matches/$matchId") ~> RawHeader("Authorization", "token") ~> routes ~> check {
+      authProbe.expectMsg(ValidateAccessToken("token"))
+      authProbe.reply(TokenIsValid(Map("user" -> loggedUser)))
+
+      probe.expectMsg(GetMatch(matchId))
+      probe.reply(Some(finishedMatch))
+
+      eventually { status shouldEqual StatusCodes.OK }
+
+      responseAs[GetMatchResponse] shouldEqual GetMatchResponse(
+        MatchResponse(
+          matchId,
+          finishedMatch.status.toString,
+          finishedMatch.homeTeamName,
+          finishedMatch.awayTeamName,
+          finishedMatch.startDate,
+          result = finishedMatch.result,
+          bet = Some(loggedUserBet),
+          otherBets = List(
+            BetEntry("foo", Score(2, 2), 0),
+            BetEntry("baz", Score(0, 2), 0)
+          )
         )
       )
     }

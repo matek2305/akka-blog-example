@@ -2,11 +2,14 @@ package com.github.matek2305.djamoe.restapi
 
 import java.time.LocalDateTime
 
-import com.github.matek2305.djamoe.domain.{MatchId, Score}
+import com.github.matek2305.djamoe.domain.{Bet, MatchId, Score}
 
 sealed trait RestApiResponse
 
 object RestApiResponse {
+
+  final case class BetEntry(player: String, bet: Score, points: Int)
+    extends RestApiResponse
 
   final case class LoginResponse(accessToken: String)
     extends RestApiResponse
@@ -17,9 +20,10 @@ object RestApiResponse {
       homeTeamName: String,
       awayTeamName: String,
       startDate: LocalDateTime,
-      result: Option[Score],
-      bet: Option[Score],
-      points: Int
+      result: Option[Score] = None,
+      bet: Option[Score] = None,
+      points: Int = 0,
+      otherBets: List[BetEntry] = List.empty
   )
     extends RestApiResponse
 

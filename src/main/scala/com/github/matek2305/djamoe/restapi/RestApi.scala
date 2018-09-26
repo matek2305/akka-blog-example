@@ -10,7 +10,7 @@ import com.github.matek2305.djamoe.auth.GetAccessTokenResponse.{AccessToken, Inv
 import com.github.matek2305.djamoe.auth.RegisterResponse.{UserRegistered, UsernameTaken}
 import com.github.matek2305.djamoe.auth.ValidateAccessTokenResponse.{TokenExpired, TokenIsValid, ValidationFailed}
 import com.github.matek2305.djamoe.domain.CompetitionCommand.AddMatch
-import com.github.matek2305.djamoe.domain.{MatchId, Score}
+import com.github.matek2305.djamoe.domain.{Match, MatchId, Score}
 import com.github.matek2305.djamoe.restapi.RestApiRequest.{LoginRequest, RegisterRequest}
 import com.github.matek2305.djamoe.restapi.RestApiResponse._
 import com.typesafe.config.Config
@@ -69,7 +69,7 @@ trait RestApi
           } ~
             pathPrefix(JavaUUID.map(MatchId(_))) { matchId =>
               onSuccess(matchById(matchId)) {
-                case Some(foundMatch) =>
+                case Some(foundMatch) if foundMatch.status == Match.CREATED =>
                   val matchResponse = MatchResponse(
                     matchId,
                     foundMatch.status.toString,
@@ -79,6 +79,25 @@ trait RestApi
                     foundMatch.result,
                     foundMatch.bets.get(username).map(_.score),
                     foundMatch.bets.get(username).map(_.points).getOrElse(0)
+                  )
+
+                  complete(StatusCodes.OK -> GetMatchResponse(matchResponse))
+                case Some(foundMatch) =>
+                  val matchResponse = MatchResponse(
+                    matchId,
+                    foundMatch.status.toString,
+                    foundMatch.homeTeamName,
+                    foundMatch.awayTeamName,
+                    foundMatch.startDate,
+                    foundMatch.result,
+                    foundMatch.bets.get(username).map(_.score),
+                    foundMatch.bets.get(username).map(_.points).getOrElse(0),
+                    foundMatch.bets
+                      .filterKeys(_ != username)
+                      .map {
+                        case (player, bet) => BetEntry(player, bet.score, bet.points)
+                      }
+                      .toList
                   )
 
                   complete(StatusCodes.OK -> GetMatchResponse(matchResponse))
