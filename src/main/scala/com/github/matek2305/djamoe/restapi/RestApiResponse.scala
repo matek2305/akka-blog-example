@@ -2,7 +2,7 @@ package com.github.matek2305.djamoe.restapi
 
 import java.time.LocalDateTime
 
-import com.github.matek2305.djamoe.domain.{Bet, MatchId, Score}
+import com.github.matek2305.djamoe.domain.{MatchId, Score}
 
 sealed trait RestApiResponse
 

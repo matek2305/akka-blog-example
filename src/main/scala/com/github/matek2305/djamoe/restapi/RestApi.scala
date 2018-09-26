@@ -51,16 +51,7 @@ trait RestApi
             onSuccess(allMatches) { matchesMap =>
               val matches = matchesMap
                 .map {
-                  case (id, entry) => MatchResponse(
-                    id,
-                    entry.status.toString,
-                    entry.homeTeamName,
-                    entry.awayTeamName,
-                    entry.startDate,
-                    entry.result,
-                    entry.bets.get(username).map(_.score),
-                    entry.bets.get(username).map(_.points).getOrElse(0)
-                  )
+                  case (id, entry) => MatchResponseFactory.withoutBets(id, entry, username)
                 }
                 .toList
 
@@ -69,39 +60,10 @@ trait RestApi
           } ~
             pathPrefix(JavaUUID.map(MatchId(_))) { matchId =>
               onSuccess(matchById(matchId)) {
-                case Some(foundMatch) if foundMatch.status == Match.CREATED =>
-                  val matchResponse = MatchResponse(
-                    matchId,
-                    foundMatch.status.toString,
-                    foundMatch.homeTeamName,
-                    foundMatch.awayTeamName,
-                    foundMatch.startDate,
-                    foundMatch.result,
-                    foundMatch.bets.get(username).map(_.score),
-                    foundMatch.bets.get(username).map(_.points).getOrElse(0)
-                  )
-
-                  complete(StatusCodes.OK -> GetMatchResponse(matchResponse))
                 case Some(foundMatch) =>
-                  val matchResponse = MatchResponse(
-                    matchId,
-                    foundMatch.status.toString,
-                    foundMatch.homeTeamName,
-                    foundMatch.awayTeamName,
-                    foundMatch.startDate,
-                    foundMatch.result,
-                    foundMatch.bets.get(username).map(_.score),
-                    foundMatch.bets.get(username).map(_.points).getOrElse(0),
-                    foundMatch.bets
-                      .filterKeys(_ != username)
-                      .map {
-                        case (player, bet) => BetEntry(player, bet.score, bet.points)
-                      }
-                      .toList
-                  )
-
-                  complete(StatusCodes.OK -> GetMatchResponse(matchResponse))
-                case None => complete(StatusCodes.NotFound -> s"Match with id=$matchId not found")
+                  complete(StatusCodes.OK -> GetMatchResponse(MatchResponseFactory.create(matchId, foundMatch, username)))
+                case None =>
+                  complete(StatusCodes.NotFound -> s"Match with id=$matchId not found")
               }
             }
         } ~
