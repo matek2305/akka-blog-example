@@ -3,18 +3,22 @@ package com.github.matek2305.djamoe.restapi
 import java.time.{LocalDateTime, Month}
 
 import akka.actor.ActorRef
-import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.headers.BasicHttpCredentials
+import akka.http.scaladsl.model.{ContentTypes, HttpEntity, StatusCodes}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.TestProbe
 import akka.util.Timeout
 import com.github.matek2305.djamoe.app.CompetitionActorQuery.GetAllMatches
+import com.github.matek2305.djamoe.app.CompetitionActorResponse.CommandProcessed
+import com.github.matek2305.djamoe.domain.CompetitionCommand.AddMatch
+import com.github.matek2305.djamoe.domain.CompetitionEvent.MatchAdded
 import com.github.matek2305.djamoe.domain.{Bet, Match, MatchId, Score}
 import com.github.matek2305.djamoe.restapi.RestApiResponse.{GetMatchesResponse, MatchResponse}
 import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest.concurrent.Eventually
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.{FlatSpec, Matchers}
+import spray.json._
 
 import scala.concurrent.duration._
 
@@ -69,6 +73,22 @@ class AdminRestApiSpec extends FlatSpec
           )
         )
       )
+    }
+  }
+
+  it should "add match to competition when POST to /admin/matches" in {
+    val addMatch = AddMatch("France", "Belgium", LocalDateTime.of(2018, Month.JULY, 10, 20, 0))
+    Post("/admin/matches", HttpEntity(ContentTypes.`application/json`, addMatch.toJson.toString)) ~>
+      addCredentials(credentials) ~> adminRoutes ~> check {
+
+      probe.expectMsg(addMatch)
+
+      val matchId = MatchId()
+      probe.reply(CommandProcessed(addMatch.toMatchAdded(matchId)))
+
+      eventually { status shouldEqual StatusCodes.Created }
+
+      responseAs[MatchAdded] shouldEqual addMatch.toMatchAdded(matchId)
     }
   }
 }

@@ -116,24 +116,6 @@ class RestApiSpec extends FlatSpec
     }
   }
 
-  it should "add match to competition when POST to /matches" in {
-    val addMatch = AddMatch("France", "Belgium", LocalDateTime.of(2018, Month.JULY, 10, 20, 0))
-
-    Post("/matches", HttpEntity(ContentTypes.`application/json`, addMatch.toJson.toString)) ~> RawHeader("Authorization", "token") ~> routes ~> check {
-      authProbe.expectMsg(ValidateAccessToken("token"))
-      authProbe.reply(TokenIsValid(Map("user" -> "user")))
-
-      probe.expectMsg(addMatch)
-
-      val matchId = MatchId()
-      probe.reply(CommandProcessed(addMatch.toMatchAdded(matchId)))
-
-      eventually { status shouldEqual StatusCodes.Created }
-
-      responseAs[MatchAdded] shouldEqual addMatch.toMatchAdded(matchId)
-    }
-  }
-
   it should "finish match with given result when POST to /matches/:matchId/results" in {
     val matchId = MatchId()
     val score = Score(2, 2)

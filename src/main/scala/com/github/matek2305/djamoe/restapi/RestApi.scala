@@ -68,17 +68,14 @@ trait RestApi
             }
         } ~
           post {
-            (pathEndOrSingleSlash & entity(as[AddMatch])) { command =>
-              onSuccess(addMatch(command)) { added => complete(StatusCodes.Created -> added) }
-            } ~
-              pathPrefix(JavaUUID.map(MatchId(_))) { matchId =>
-                (pathPrefix("results") & entity(as[Score])) { score =>
-                  onSuccess(finishMatch(matchId, score)) { finished => complete(StatusCodes.OK -> finished) }
-                } ~
-                  (pathPrefix("bets") & entity(as[Score])) { bet =>
-                    onSuccess(makeBet(matchId, username, bet)) { made => complete(StatusCodes.OK -> made) }
-                  }
-              }
+            pathPrefix(JavaUUID.map(MatchId(_))) { matchId =>
+              (pathPrefix("results") & entity(as[Score])) { score =>
+                onSuccess(finishMatch(matchId, score)) { finished => complete(StatusCodes.OK -> finished) }
+              } ~
+                (pathPrefix("bets") & entity(as[Score])) { bet =>
+                  onSuccess(makeBet(matchId, username, bet)) { made => complete(StatusCodes.OK -> made) }
+                }
+            }
           }
       } ~
         pathPrefix("points") {

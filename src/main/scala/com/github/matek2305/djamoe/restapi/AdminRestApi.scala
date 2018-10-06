@@ -6,6 +6,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.Credentials
 import com.github.matek2305.djamoe.app.CompetitionService
+import com.github.matek2305.djamoe.domain.CompetitionCommand.AddMatch
 import com.github.matek2305.djamoe.restapi.RestApiResponse.{GetMatchesResponse, MatchResponse}
 import com.typesafe.config.Config
 
@@ -42,7 +43,12 @@ trait AdminRestApi
 
             complete(StatusCodes.OK -> GetMatchesResponse(matches))
           }
-        }
+        } ~
+          post {
+            (pathEndOrSingleSlash & entity(as[AddMatch])) { command =>
+              onSuccess(addMatch(command)) { added => complete(StatusCodes.Created -> added) }
+            }
+          }
       }
     }
   }
