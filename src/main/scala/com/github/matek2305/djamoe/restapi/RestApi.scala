@@ -10,7 +10,7 @@ import com.github.matek2305.djamoe.auth.GetAccessTokenResponse.{AccessToken, Inv
 import com.github.matek2305.djamoe.auth.RegisterResponse.{UserRegistered, UsernameTaken}
 import com.github.matek2305.djamoe.auth.ValidateAccessTokenResponse.{TokenExpired, TokenIsValid, ValidationFailed}
 import com.github.matek2305.djamoe.domain.CompetitionCommand.AddMatch
-import com.github.matek2305.djamoe.domain.{Match, MatchId, Score}
+import com.github.matek2305.djamoe.domain.{MatchId, Score}
 import com.github.matek2305.djamoe.restapi.RestApiRequest.{LoginRequest, RegisterRequest}
 import com.github.matek2305.djamoe.restapi.RestApiResponse._
 import com.typesafe.config.Config

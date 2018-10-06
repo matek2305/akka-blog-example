@@ -7,13 +7,13 @@ import akka.stream.{ActorMaterializer, Materializer}
 import akka.util.Timeout
 import com.github.matek2305.djamoe.app.CompetitionActor
 import com.github.matek2305.djamoe.auth.AuthActor
-import com.github.matek2305.djamoe.restapi.RestApi
+import com.github.matek2305.djamoe.restapi.{AdminRestApi, RestApi}
 import com.typesafe.config.{Config, ConfigFactory}
 
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContextExecutor
 
-object WebServer extends App with RestApi {
+object WebServer extends App with RestApi with AdminRestApi {
 
   override implicit val system: ActorSystem = ActorSystem()
   override implicit val materializer: Materializer = ActorMaterializer()
@@ -28,6 +28,6 @@ object WebServer extends App with RestApi {
   val interface = config.getString("http.interface")
   val port = config.getInt("http.port")
 
-  Http().bindAndHandle(unsecuredRoutes ~ routes, interface, port)
+  Http().bindAndHandle(adminRoutes ~ unsecuredRoutes ~ routes, interface, port)
   println(s"Server online at http://$interface:$port/")
 }
