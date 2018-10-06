@@ -18,28 +18,30 @@ trait AdminRestApi
 
   def adminAuthenticator(credentials: Credentials): Option[String] =
     credentials match {
-      case p @ Credentials.Provided(id) if p.verify(config.getString("auth.admin-password")) => Some(id)
+      case p@Credentials.Provided(id) if p.verify(config.getString("auth.admin-password")) => Some(id)
       case _ => None
     }
 
   val adminRoutes: Route = {
-    (authenticateBasic("admin-realm", adminAuthenticator) & pathPrefix("admin" / "matches")) { username =>
-      get {
-        onSuccess(allMatches) { matchesMap =>
-          val matches = matchesMap
-            .map {
-              case (id, entry) => MatchResponse(
-                id,
-                entry.status.toString,
-                entry.homeTeamName,
-                entry.awayTeamName,
-                entry.startDate,
-                entry.result
-              )
-            }
-            .toList
+    authenticateBasic("admin-realm", adminAuthenticator) { _ =>
+      pathPrefix("admin" / "matches") {
+        get {
+          onSuccess(allMatches) { matchesMap =>
+            val matches = matchesMap
+              .map {
+                case (id, entry) => MatchResponse(
+                  id,
+                  entry.status.toString,
+                  entry.homeTeamName,
+                  entry.awayTeamName,
+                  entry.startDate,
+                  entry.result
+                )
+              }
+              .toList
 
-          complete(StatusCodes.OK -> GetMatchesResponse(matches))
+            complete(StatusCodes.OK -> GetMatchesResponse(matches))
+          }
         }
       }
     }
