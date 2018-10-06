@@ -9,7 +9,6 @@ import com.github.matek2305.djamoe.auth.AuthService
 import com.github.matek2305.djamoe.auth.GetAccessTokenResponse.{AccessToken, InvalidCredentials}
 import com.github.matek2305.djamoe.auth.RegisterResponse.{UserRegistered, UsernameTaken}
 import com.github.matek2305.djamoe.auth.ValidateAccessTokenResponse.{TokenExpired, TokenIsValid, ValidationFailed}
-import com.github.matek2305.djamoe.domain.CompetitionCommand.AddMatch
 import com.github.matek2305.djamoe.domain.{MatchId, Score}
 import com.github.matek2305.djamoe.restapi.RestApiRequest.{LoginRequest, RegisterRequest}
 import com.github.matek2305.djamoe.restapi.RestApiResponse._
@@ -69,12 +68,9 @@ trait RestApi
         } ~
           post {
             pathPrefix(JavaUUID.map(MatchId(_))) { matchId =>
-              (pathPrefix("results") & entity(as[Score])) { score =>
-                onSuccess(finishMatch(matchId, score)) { finished => complete(StatusCodes.OK -> finished) }
-              } ~
-                (pathPrefix("bets") & entity(as[Score])) { bet =>
-                  onSuccess(makeBet(matchId, username, bet)) { made => complete(StatusCodes.OK -> made) }
-                }
+              (pathPrefix("bets") & entity(as[Score])) { bet =>
+                onSuccess(makeBet(matchId, username, bet)) { made => complete(StatusCodes.OK -> made) }
+              }
             }
           }
       } ~

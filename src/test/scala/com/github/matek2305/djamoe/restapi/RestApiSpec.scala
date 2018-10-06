@@ -14,8 +14,8 @@ import com.github.matek2305.djamoe.auth.AuthActorCommand.Register
 import com.github.matek2305.djamoe.auth.AuthActorQuery.ValidateAccessToken
 import com.github.matek2305.djamoe.auth.RegisterResponse.UserRegistered
 import com.github.matek2305.djamoe.auth.ValidateAccessTokenResponse.TokenIsValid
-import com.github.matek2305.djamoe.domain.CompetitionCommand.{AddMatch, FinishMatch, MakeBet}
-import com.github.matek2305.djamoe.domain.CompetitionEvent.{BetMade, MatchAdded, MatchFinished}
+import com.github.matek2305.djamoe.domain.CompetitionCommand.MakeBet
+import com.github.matek2305.djamoe.domain.CompetitionEvent.BetMade
 import com.github.matek2305.djamoe.domain.{Bet, Match, MatchId, Score}
 import com.github.matek2305.djamoe.restapi.RestApiRequest.RegisterRequest
 import com.github.matek2305.djamoe.restapi.RestApiResponse._
@@ -113,23 +113,6 @@ class RestApiSpec extends FlatSpec
           PlayerPoints("Baz", 0)
         )
       )
-    }
-  }
-
-  it should "finish match with given result when POST to /matches/:matchId/results" in {
-    val matchId = MatchId()
-    val score = Score(2, 2)
-
-    Post(s"/matches/$matchId/results", HttpEntity(ContentTypes.`application/json`, score.toJson.toString)) ~> RawHeader("Authorization", "token") ~> routes ~> check {
-      authProbe.expectMsg(ValidateAccessToken("token"))
-      authProbe.reply(TokenIsValid(Map("user" -> "user")))
-
-      probe.expectMsg(FinishMatch(matchId, score))
-      probe.reply(CommandProcessed(MatchFinished(matchId, score)))
-
-      eventually { status shouldEqual StatusCodes.OK }
-
-      responseAs[MatchFinished] shouldEqual MatchFinished(matchId, score)
     }
   }
 

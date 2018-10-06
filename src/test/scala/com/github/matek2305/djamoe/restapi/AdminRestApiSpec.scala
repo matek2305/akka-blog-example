@@ -10,8 +10,8 @@ import akka.testkit.TestProbe
 import akka.util.Timeout
 import com.github.matek2305.djamoe.app.CompetitionActorQuery.GetAllMatches
 import com.github.matek2305.djamoe.app.CompetitionActorResponse.CommandProcessed
-import com.github.matek2305.djamoe.domain.CompetitionCommand.AddMatch
-import com.github.matek2305.djamoe.domain.CompetitionEvent.MatchAdded
+import com.github.matek2305.djamoe.domain.CompetitionCommand.{AddMatch, FinishMatch}
+import com.github.matek2305.djamoe.domain.CompetitionEvent.{MatchAdded, MatchFinished}
 import com.github.matek2305.djamoe.domain.{Bet, Match, MatchId, Score}
 import com.github.matek2305.djamoe.restapi.RestApiResponse.{GetMatchesResponse, MatchResponse}
 import com.typesafe.config.{Config, ConfigFactory}
@@ -89,6 +89,22 @@ class AdminRestApiSpec extends FlatSpec
       eventually { status shouldEqual StatusCodes.Created }
 
       responseAs[MatchAdded] shouldEqual addMatch.toMatchAdded(matchId)
+    }
+  }
+
+  it should "finish match with given result when POST to /admin/matches/:matchId/results" in {
+    val matchId = MatchId()
+    val score = Score(2, 2)
+
+    Post(s"/admin/matches/$matchId/results", HttpEntity(ContentTypes.`application/json`, score.toJson.toString)) ~>
+      addCredentials(credentials) ~> adminRoutes ~> check {
+
+      probe.expectMsg(FinishMatch(matchId, score))
+      probe.reply(CommandProcessed(MatchFinished(matchId, score)))
+
+      eventually { status shouldEqual StatusCodes.OK }
+
+      responseAs[MatchFinished] shouldEqual MatchFinished(matchId, score)
     }
   }
 }
