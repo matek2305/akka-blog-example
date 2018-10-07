@@ -1,6 +1,6 @@
 package com.github.matek2305.djamoe.restapi
 
-import java.time.{LocalDateTime, Month}
+import java.time.LocalDateTime.parse
 
 import akka.actor.ActorRef
 import akka.http.scaladsl.model.headers.BasicHttpCredentials
@@ -10,8 +10,8 @@ import akka.testkit.TestProbe
 import akka.util.Timeout
 import com.github.matek2305.djamoe.app.CompetitionActorQuery.GetAllMatches
 import com.github.matek2305.djamoe.app.CompetitionActorResponse.CommandProcessed
-import com.github.matek2305.djamoe.domain.CompetitionCommand.{AddMatch, FinishMatch}
-import com.github.matek2305.djamoe.domain.CompetitionEvent.{MatchAdded, MatchFinished}
+import com.github.matek2305.djamoe.domain.CompetitionCommand.{AddMatch, FinishMatch, LockBetting}
+import com.github.matek2305.djamoe.domain.CompetitionEvent.{BettingLocked, MatchAdded, MatchFinished}
 import com.github.matek2305.djamoe.domain.{Bet, Match, MatchId, Score}
 import com.github.matek2305.djamoe.restapi.RestApiResponse.{GetMatchesResponse, MatchResponse}
 import com.typesafe.config.{Config, ConfigFactory}
@@ -43,7 +43,7 @@ class AdminRestApiSpec extends FlatSpec
   val sampleMatch = Match(
     "France",
     "Belgium",
-    LocalDateTime.of(2018, Month.JULY, 10, 20, 0),
+    parse("2018-07-10T20:00"),
     bets = Map(
       "foo" -> Bet(Score(2, 2)),
       "bar" -> Bet(Score(2, 1)),
@@ -51,10 +51,10 @@ class AdminRestApiSpec extends FlatSpec
     )
   )
 
-  val credentials = BasicHttpCredentials("admin", config.getString("auth.admin-password"))
+  val adminCredentials = BasicHttpCredentials("admin", config.getString("auth.admin-password"))
 
   "admin rest api" should "return list of all matches when GET /admin/matches" in {
-    Get("/admin/matches") ~> addCredentials(credentials) ~> adminRoutes ~> check {
+    Get("/admin/matches") ~> addCredentials(adminCredentials) ~> adminRoutes ~> check {
       probe.expectMsg(GetAllMatches)
 
       val matchId = MatchId()
@@ -77,9 +77,9 @@ class AdminRestApiSpec extends FlatSpec
   }
 
   it should "add match to competition when POST to /admin/matches" in {
-    val addMatch = AddMatch("France", "Belgium", LocalDateTime.of(2018, Month.JULY, 10, 20, 0))
+    val addMatch = AddMatch("France", "Belgium", parse("2018-07-10T20:00"))
     Post("/admin/matches", HttpEntity(ContentTypes.`application/json`, addMatch.toJson.toString)) ~>
-      addCredentials(credentials) ~> adminRoutes ~> check {
+      addCredentials(adminCredentials) ~> adminRoutes ~> check {
 
       probe.expectMsg(addMatch)
 
@@ -97,7 +97,7 @@ class AdminRestApiSpec extends FlatSpec
     val score = Score(2, 2)
 
     Post(s"/admin/matches/$matchId/results", HttpEntity(ContentTypes.`application/json`, score.toJson.toString)) ~>
-      addCredentials(credentials) ~> adminRoutes ~> check {
+      addCredentials(adminCredentials) ~> adminRoutes ~> check {
 
       probe.expectMsg(FinishMatch(matchId, score))
       probe.reply(CommandProcessed(MatchFinished(matchId, score)))
@@ -105,6 +105,17 @@ class AdminRestApiSpec extends FlatSpec
       eventually { status shouldEqual StatusCodes.OK }
 
       responseAs[MatchFinished] shouldEqual MatchFinished(matchId, score)
+    }
+  }
+
+  it should "lock betting for match when POST to /admin/matches/:matchId/locks" in {
+    val matchId = MatchId()
+
+    Post(s"/admin/matches/$matchId/locks") ~> addCredentials(adminCredentials) ~> adminRoutes ~> check {
+      probe.expectMsg(LockBetting(matchId))
+      probe.reply(CommandProcessed(BettingLocked(matchId)))
+
+      eventually { status shouldEqual StatusCodes.OK }
     }
   }
 }

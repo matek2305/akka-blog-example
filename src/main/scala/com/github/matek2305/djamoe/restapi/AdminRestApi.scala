@@ -52,7 +52,10 @@ trait AdminRestApi
               pathPrefix(JavaUUID.map(MatchId(_))) { matchId =>
                 (pathPrefix("results") & entity(as[Score])) { score =>
                   onSuccess(finishMatch(matchId, score)) { finished => complete(StatusCodes.OK -> finished) }
-                }
+                } ~
+                  pathPrefix("locks") {
+                    onSuccess(lockBetting(matchId)) { _ => complete(StatusCodes.OK) }
+                  }
               }
           }
       }
