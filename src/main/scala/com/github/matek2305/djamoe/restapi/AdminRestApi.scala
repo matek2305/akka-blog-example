@@ -8,6 +8,7 @@ import akka.http.scaladsl.server.directives.Credentials
 import com.github.matek2305.djamoe.app.CompetitionService
 import com.github.matek2305.djamoe.domain.CompetitionCommand.AddMatch
 import com.github.matek2305.djamoe.domain.{MatchId, Score}
+import com.github.matek2305.djamoe.restapi.RestApiRequest.LoginRequest
 import com.github.matek2305.djamoe.restapi.RestApiResponse.{GetMatchesResponse, MatchResponse}
 import com.typesafe.config.Config
 
@@ -25,37 +26,42 @@ trait AdminRestApi
     }
 
   val adminRoutes: Route = {
-    authenticateBasic("admin-realm", adminAuthenticator) { _ =>
-      pathPrefix("admin" / "matches") {
-        get {
-          onSuccess(allMatches) { matchesMap =>
-            val matches = matchesMap
-              .map {
-                case (id, entry) => MatchResponse(
-                  id,
-                  entry.status.toString,
-                  entry.homeTeamName,
-                  entry.awayTeamName,
-                  entry.startDate,
-                  entry.result
-                )
-              }
-              .toList
-
-            complete(StatusCodes.OK -> GetMatchesResponse(matches))
-          }
-        } ~
-          post {
-            (pathEndOrSingleSlash & entity(as[AddMatch])) { command =>
-              onSuccess(addMatch(command)) { added => complete(StatusCodes.Created -> added) }
-            } ~
-              pathPrefix(JavaUUID.map(MatchId(_))) { matchId =>
-                (pathPrefix("results") & entity(as[Score])) { score =>
-                  onSuccess(finishMatch(matchId, score)) { finished => complete(StatusCodes.OK -> finished) }
+    (pathPrefix("admin" / "login") & post & entity(as[LoginRequest])) {
+      case LoginRequest(_, password) if password.equals(config.getString("auth.admin-password")) =>
+        complete(StatusCodes.OK)
+      case _ => complete(StatusCodes.Unauthorized)
+    } ~
+      authenticateBasic("admin-realm", adminAuthenticator) { _ =>
+        pathPrefix("admin" / "matches") {
+          get {
+            onSuccess(allMatches) { matchesMap =>
+              val matches = matchesMap
+                .map {
+                  case (id, entry) => MatchResponse(
+                    id,
+                    entry.status.toString,
+                    entry.homeTeamName,
+                    entry.awayTeamName,
+                    entry.startDate,
+                    entry.result
+                  )
                 }
-              }
-          }
+                .toList
+
+              complete(StatusCodes.OK -> GetMatchesResponse(matches))
+            }
+          } ~
+            post {
+              (pathEndOrSingleSlash & entity(as[AddMatch])) { command =>
+                onSuccess(addMatch(command)) { added => complete(StatusCodes.Created -> added) }
+              } ~
+                pathPrefix(JavaUUID.map(MatchId(_))) { matchId =>
+                  (pathPrefix("results") & entity(as[Score])) { score =>
+                    onSuccess(finishMatch(matchId, score)) { finished => complete(StatusCodes.OK -> finished) }
+                  }
+                }
+            }
+        }
       }
-    }
   }
 }
