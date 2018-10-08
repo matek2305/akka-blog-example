@@ -1,14 +1,21 @@
 language: scala
+
 jdk: oraclejdk8
+
 scala:
-- 2.12.6
+  - 2.12.6
+
 before_install:
-- echo "$DOCKER_PASSWORD" | docker login -u "matek2305" --password-stdin
+  - echo "$DOCKER_PASSWORD" | docker login -u "matek2305" --password-stdin
+
 script:
-- sbt ++$TRAVIS_SCALA_VERSION coverage test
-- sbt ++$TRAVIS_SCALA_VERSION coverageReport
-- sbt ++$TRAVIS_SCALA_VERSION codacyCoverage
-- sbt ++$TRAVIS_SCALA_VERSION docker:publish
+  - sbt ++$TRAVIS_SCALA_VERSION coverage test
+  - sbt ++$TRAVIS_SCALA_VERSION coverageReport
+  - sbt ++$TRAVIS_SCALA_VERSION codacyCoverage
+
+after_success:
+  - '[[ $TRAVIS_BRANCH == "master" ]] && sbt ++$TRAVIS_SCALA_VERSION docker:publish'
+
 env:
   matrix:
     secure: hx2ToIFkLmFeMpQUl2VHk+i7VDh9LusotcCwK3Wr9Od7jg+2yBjst5/8zh3eKlmhAie/ZXQKOJDoYv//ic7FlPs/oT9hRetcx7OFkCMWCryF077XTAe8dSQaRh105zomUvKc3UU79sDwqcvSshxGtp9TRmKpooDU3javZSJMYYi2vQz83vSETlspW3KmLOoNilVgs3tCmT9wHM38IUzuzD6FZ1HBElwWUOYxHUZa1GE5+0PPb7rUrdz3CxeUgHBoJ28fiI0AFSl3OTywI1O796WMBkvm6/k9P3HxaI+7GQ522QibndwXC8UQdLZqpnViaY6XmQL6nobBhtow3VXuAZmF2KStOhDBWQCZhJP9Teo+V02JXfHOz4yJO0D1XIurC2vQSEo1WXGXWWBSyKF5wkXq0KQYXhIZoJyGlNdhAmkT6ydqWULfVgroAu9PUrhMXPZigLN7SWStcJy/jbItYyHWGiYZ1ryD9+yzW8w6eC1b7c9a0Q2T1RHFJwuvhR0xJIlPJoq05SGvxJXmvi/wyFddmYW27cbAjWpTReaVXZCFxXrHYnd/f0fTguBJrdDb7w2FCi/ZVRsGgE1RpvDz3looUCX4zV233dPik4vQdJpOSVruA8MuCJi239QlQpTpky8MTY37HLs/OkIRyINj9BGi7rVV8sVvaSJVQac5RWU=
