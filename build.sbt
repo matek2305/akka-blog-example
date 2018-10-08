@@ -7,6 +7,8 @@ mainClass := Some("com.github.matek2305.djamoe.WebServer")
 scalaVersion := "2.12.6"
 
 dockerBaseImage := "openjdk:jre-alpine"
+dockerUsername := Some("matek2305")
+dockerUpdateLatest := true
 
 libraryDependencies ++= {
   val akkaVersion = "2.5.2"
