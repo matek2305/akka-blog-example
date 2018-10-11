@@ -13,6 +13,7 @@ import com.github.matek2305.djamoe.app.CompetitionActorResponse.CommandProcessed
 import com.github.matek2305.djamoe.domain.CompetitionCommand.{AddMatch, FinishMatch, LockBetting}
 import com.github.matek2305.djamoe.domain.CompetitionEvent.{BettingLocked, MatchAdded, MatchFinished}
 import com.github.matek2305.djamoe.domain.{Bet, Match, MatchId, Score}
+import com.github.matek2305.djamoe.restapi.RestApiRequest.LoginRequest
 import com.github.matek2305.djamoe.restapi.RestApiResponse.{GetMatchesResponse, MatchResponse}
 import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest.concurrent.Eventually
@@ -115,7 +116,21 @@ class AdminRestApiSpec extends FlatSpec
       probe.expectMsg(LockBetting(matchId))
       probe.reply(CommandProcessed(BettingLocked(matchId)))
 
-      eventually { status shouldEqual StatusCodes.OK }
+      eventually {
+        status shouldEqual StatusCodes.OK
+      }
     }
+  }
+
+  it should "authenticate admin when POST to /admin/login with valid credentials" in {
+    val request = LoginRequest(adminCredentials.username, adminCredentials.password)
+    Post("/admin/login", HttpEntity(ContentTypes.`application/json`, request.toJson.toString)) ~>
+      adminRoutes ~> check { status shouldEqual StatusCodes.OK }
+  }
+
+  it should "not authenticate admin when POST to /admin/login with invalid password" in {
+    val request = LoginRequest(adminCredentials.username, s"${adminCredentials.password}invalid")
+    Post("/admin/login", HttpEntity(ContentTypes.`application/json`, request.toJson.toString)) ~>
+      adminRoutes ~> check { status shouldEqual StatusCodes.Unauthorized }
   }
 }
