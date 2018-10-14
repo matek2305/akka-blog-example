@@ -21,7 +21,6 @@ libraryDependencies ++= {
     "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion,
     "com.jason-goodwin" %% "authentikat-jwt" % "0.4.5",
     "org.iq80.leveldb" % "leveldb" % "0.7",
-    "io.circe" %% "circe-generic" % "0.8.0",
     "org.fusesource.leveldbjni" % "leveldbjni-all" % "1.8",
     "org.mindrot" % "jbcrypt" % "0.4",
     "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
