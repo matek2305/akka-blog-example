@@ -10,3 +10,7 @@ services:
       - '9160:9160'
     volumes:
       - './cassandra_data:/bitnami'
+  djamoe:
+    image: 'matek2305/djamoe-betting-engine:latest'
+    ports:
+      - '8081:8080'
