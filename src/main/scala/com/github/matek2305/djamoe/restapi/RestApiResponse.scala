@@ -27,16 +27,16 @@ object RestApiResponse {
   )
     extends RestApiResponse
 
-  final case class GetMatchResponse(`match`: MatchResponse)
+  final case class GetMatchResponse(data: MatchResponse)
     extends RestApiResponse
 
-  final case class GetMatchesResponse(matches: List[MatchResponse])
+  final case class GetMatchesResponse(data: List[MatchResponse])
     extends RestApiResponse
 
   final case class PlayerPoints(name: String, points: Int)
     extends RestApiResponse
 
-  final case class GetPointsResponse(players: List[PlayerPoints])
+  final case class GetPointsResponse(data: List[PlayerPoints])
     extends RestApiResponse
 
 }
