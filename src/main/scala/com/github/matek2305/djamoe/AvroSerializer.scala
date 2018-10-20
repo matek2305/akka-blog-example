@@ -50,32 +50,19 @@ class AvroSerializer extends SerializerWithStringManifest {
 
   override def fromBinary(bytes: Array[Byte], manifest: String): AnyRef = {
     manifest match {
-      case UserRegisteredManifest =>
-        val is = new ByteArrayInputStream(bytes)
-        val input = AvroInputStream.binary[UserRegistered](is)
-        is.close()
-        input.iterator.toSeq.head
-      case MatchAddedManifest =>
-        val is = new ByteArrayInputStream(bytes)
-        val input = AvroInputStream.binary[MatchAdded](is)
-        is.close()
-        input.iterator.toSeq.head
-      case MatchFinishedManifest =>
-        val is = new ByteArrayInputStream(bytes)
-        val input = AvroInputStream.binary[MatchFinished](is)
-        is.close()
-        input.iterator.toSeq.head
-      case BetMadeManifest =>
-        val is = new ByteArrayInputStream(bytes)
-        val input = AvroInputStream.binary[BetMade](is)
-        is.close()
-        input.iterator.toSeq.head
-      case BettingLockedManifest =>
-        val is = new ByteArrayInputStream(bytes)
-        val input = AvroInputStream.binary[BettingLocked](is)
-        is.close()
-        input.iterator.toSeq.head
+      case UserRegisteredManifest => fromBinaryByClass[UserRegistered](bytes)
+      case MatchAddedManifest => fromBinaryByClass[MatchAdded](bytes)
+      case MatchFinishedManifest => fromBinaryByClass[MatchFinished](bytes)
+      case BetMadeManifest => fromBinaryByClass[BetMade](bytes)
+      case BettingLockedManifest => fromBinaryByClass[BettingLocked](bytes)
       case _ => throw new IllegalArgumentException(s"Unable to handle manifest: $manifest")
     }
+  }
+
+  def fromBinaryByClass[T: SchemaFor : FromRecord](bytes: Array[Byte]): T = {
+    val is = new ByteArrayInputStream(bytes)
+    val input = AvroInputStream.binary[T](is)
+    is.close()
+    input.iterator.next()
   }
 }
