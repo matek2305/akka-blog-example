@@ -22,6 +22,7 @@ libraryDependencies ++= {
     "com.jason-goodwin" %% "authentikat-jwt" % "0.4.5",
     "com.typesafe.akka" %% "akka-persistence-cassandra" % "0.90",
     "org.mindrot" % "jbcrypt" % "0.4",
+    "com.sksamuel.avro4s" %% "avro4s-core" % "1.9.0",
     "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
     "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % Test,
     "com.github.dnvriend" %% "akka-persistence-inmemory" % "2.5.1.1" % Test,
