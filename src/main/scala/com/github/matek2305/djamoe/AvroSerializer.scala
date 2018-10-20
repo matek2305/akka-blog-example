@@ -1,9 +1,10 @@
-package com.github.matek2305.djamoe.app
+package com.github.matek2305.djamoe
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.util.UUID
 
 import akka.serialization.SerializerWithStringManifest
+import com.github.matek2305.djamoe.auth.RegisterResponse.UserRegistered
 import com.github.matek2305.djamoe.domain.CompetitionEvent.{BetMade, BettingLocked, MatchAdded, MatchFinished}
 import com.github.matek2305.djamoe.domain.MatchId
 import com.sksamuel.avro4s._
@@ -15,6 +16,7 @@ class AvroSerializer extends SerializerWithStringManifest {
 
   override def manifest(o: AnyRef): String = o.getClass.getName
 
+  final val UserRegisteredManifest = classOf[UserRegistered].getName
   final val MatchAddedManifest = classOf[MatchAdded].getName
   final val MatchFinishedManifest = classOf[MatchFinished].getName
   final val BetMadeManifest = classOf[BetMade].getName
@@ -27,10 +29,11 @@ class AvroSerializer extends SerializerWithStringManifest {
   }
 
   override def toBinary(o: AnyRef): Array[Byte] = o match {
-    case added: MatchAdded => toBinaryByClass(added)
-    case finished: MatchFinished => toBinaryByClass(finished)
-    case made: BetMade => toBinaryByClass(made)
-    case locked: BettingLocked => toBinaryByClass(locked)
+    case event: UserRegistered => toBinaryByClass(event)
+    case event: MatchAdded => toBinaryByClass(event)
+    case event: MatchFinished => toBinaryByClass(event)
+    case event: BetMade => toBinaryByClass(event)
+    case event: BettingLocked => toBinaryByClass(event)
     case _ => throw new IllegalArgumentException(s"Unknown event to serialize: $o")
   }
 
@@ -47,6 +50,11 @@ class AvroSerializer extends SerializerWithStringManifest {
 
   override def fromBinary(bytes: Array[Byte], manifest: String): AnyRef = {
     manifest match {
+      case UserRegisteredManifest =>
+        val is = new ByteArrayInputStream(bytes)
+        val input = AvroInputStream.binary[UserRegistered](is)
+        is.close()
+        input.iterator.toSeq.head
       case MatchAddedManifest =>
         val is = new ByteArrayInputStream(bytes)
         val input = AvroInputStream.binary[MatchAdded](is)
