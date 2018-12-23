@@ -14,6 +14,4 @@ object CompetitionEvent {
 
   final case class BetMade(matchId: MatchId, who: String, bet: Score) extends CompetitionEvent
 
-  final case class BettingLocked(matchId: MatchId) extends CompetitionEvent
-
 }

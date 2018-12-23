@@ -61,7 +61,6 @@ class RestApiSpec extends FlatSpec
     )
   )
 
-  val lockedMatch: Match = createdMatch.copy(status = Match.LOCKED)
   val finishedMatch: Match = createdMatch.copy(status = Match.FINISHED, result = Some(Score(2, 1)))
 
   "rest api" should "return list of all matches when GET /matches" in {
@@ -177,34 +176,6 @@ class RestApiSpec extends FlatSpec
           createdMatch.awayTeamName,
           createdMatch.startDate,
           bet = Some(loggedUserBet)
-        )
-      )
-    }
-  }
-
-  it should "return LOCKED match when GET /matches/:id" in {
-    val matchId = MatchId()
-    Get(s"/matches/$matchId") ~> RawHeader("Authorization", "token") ~> routes ~> check {
-      authProbe.expectMsg(ValidateAccessToken("token"))
-      authProbe.reply(TokenIsValid(Map("user" -> loggedUser)))
-
-      probe.expectMsg(GetMatch(matchId))
-      probe.reply(Some(lockedMatch))
-
-      eventually { status shouldEqual StatusCodes.OK }
-
-      responseAs[GetMatchResponse] shouldEqual GetMatchResponse(
-        MatchResponse(
-          matchId,
-          lockedMatch.status.toString,
-          lockedMatch.homeTeamName,
-          lockedMatch.awayTeamName,
-          lockedMatch.startDate,
-          bet = Some(loggedUserBet),
-          otherBets = List(
-            BetEntry("foo", Score(2, 2), 0),
-            BetEntry("baz", Score(0, 2), 0)
-          )
         )
       )
     }

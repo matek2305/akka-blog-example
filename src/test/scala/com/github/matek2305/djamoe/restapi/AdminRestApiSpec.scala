@@ -10,8 +10,8 @@ import akka.testkit.TestProbe
 import akka.util.Timeout
 import com.github.matek2305.djamoe.app.CompetitionActorQuery.GetAllMatches
 import com.github.matek2305.djamoe.app.CompetitionActorResponse.CommandProcessed
-import com.github.matek2305.djamoe.domain.CompetitionCommand.{AddMatch, FinishMatch, LockBetting}
-import com.github.matek2305.djamoe.domain.CompetitionEvent.{BettingLocked, MatchAdded, MatchFinished}
+import com.github.matek2305.djamoe.domain.CompetitionCommand.{AddMatch, FinishMatch}
+import com.github.matek2305.djamoe.domain.CompetitionEvent.{MatchAdded, MatchFinished}
 import com.github.matek2305.djamoe.domain.{Bet, Match, MatchId, Score}
 import com.github.matek2305.djamoe.restapi.RestApiRequest.LoginRequest
 import com.github.matek2305.djamoe.restapi.RestApiResponse.{GetMatchesResponse, MatchResponse}
@@ -106,19 +106,6 @@ class AdminRestApiSpec extends FlatSpec
       eventually { status shouldEqual StatusCodes.OK }
 
       responseAs[MatchFinished] shouldEqual MatchFinished(matchId, score)
-    }
-  }
-
-  it should "lock betting for match when POST to /admin/matches/:matchId/locks" in {
-    val matchId = MatchId()
-
-    Post(s"/admin/matches/$matchId/locks") ~> addCredentials(adminCredentials) ~> adminRoutes ~> check {
-      probe.expectMsg(LockBetting(matchId))
-      probe.reply(CommandProcessed(BettingLocked(matchId)))
-
-      eventually {
-        status shouldEqual StatusCodes.OK
-      }
     }
   }
 

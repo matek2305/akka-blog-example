@@ -19,8 +19,6 @@ final case class Match(
 
   def addBet(who: String, bet: Score): Match = copy(bets = bets.updated(who, Bet(bet)))
 
-  def lockBetting(): Match = copy(status = Match.LOCKED)
-
   def finish(result: Score): Match = copy(
     result = Some(result),
     status = Match.FINISHED,
@@ -48,7 +46,7 @@ final case class Match(
 
 object Match extends Enumeration {
   type Status = Value
-  val CREATED, LOCKED, FINISHED = Value
+  val CREATED, FINISHED = Value
   def from(matchAdded: MatchAdded): Match = {
     Match(matchAdded.homeTeamName, matchAdded.awayTeamName, matchAdded.startDate)
   }

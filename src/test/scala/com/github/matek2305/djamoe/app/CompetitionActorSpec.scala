@@ -8,8 +8,8 @@ import akka.testkit.{ImplicitSender, TestKit}
 import com.github.matek2305.djamoe.app.CompetitionActorQuery.{GetAllMatches, GetMatch, GetPoints}
 import com.github.matek2305.djamoe.app.CompetitionActorResponse.{CommandProcessed, CommandProcessingFailed}
 import com.github.matek2305.djamoe.app.CompetitionActorSpec.Test
-import com.github.matek2305.djamoe.domain.CompetitionCommand.{AddMatch, FinishMatch, LockBetting, MakeBet}
-import com.github.matek2305.djamoe.domain.CompetitionEvent.{BetMade, BettingLocked, MatchFinished}
+import com.github.matek2305.djamoe.domain.CompetitionCommand.{AddMatch, FinishMatch, MakeBet}
+import com.github.matek2305.djamoe.domain.CompetitionEvent.{BetMade, MatchFinished}
 import com.github.matek2305.djamoe.domain._
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
@@ -209,48 +209,6 @@ class CompetitionActorSpec
 
       competitionActor ! GetPoints
       expectMsg(Map("Foo" -> 7, "Bar" -> 2))
-    }
-
-    "lock betting and preserve state after restart" in new Test {
-      competitionActor ! sampleAddMatchCommand
-      val matchId: MatchId = expectMsgType[CommandProcessed].event.matchId
-
-      competitionActor ! LockBetting(matchId)
-      expectMsg(CommandProcessed(BettingLocked(matchId)))
-
-      competitionActor ! PoisonPill
-
-      val restored: ActorRef = system.actorOf(CompetitionActor.props(competitionId))
-      restored ! GetAllMatches
-      expectMsg(Map(
-        matchId -> Match(
-          sampleAddMatchCommand.homeTeamName,
-          sampleAddMatchCommand.awayTeamName,
-          sampleAddMatchCommand.startDate,
-          Match.LOCKED
-        )
-      ))
-    }
-
-    "prevent betting after match is locked" in new Test {
-      competitionActor ! sampleAddMatchCommand
-      val matchId: MatchId = expectMsgType[CommandProcessed].event.matchId
-
-      competitionActor ! LockBetting(matchId)
-      expectMsg(CommandProcessed(BettingLocked(matchId)))
-
-      competitionActor ! MakeBet(matchId, "Foo", Score(2, 0))
-      expectMsgType[CommandProcessingFailed]
-
-      competitionActor ! GetAllMatches
-      expectMsg(Map(
-        matchId -> Match(
-          sampleAddMatchCommand.homeTeamName,
-          sampleAddMatchCommand.awayTeamName,
-          sampleAddMatchCommand.startDate,
-          Match.LOCKED
-        )
-      ))
     }
 
     "prevent betting after match is finished" in new Test {

@@ -1,7 +1,7 @@
 package com.github.matek2305.djamoe.domain
 
-import com.github.matek2305.djamoe.domain.CompetitionCommand.{AddMatch, FinishMatch, LockBetting, MakeBet}
-import com.github.matek2305.djamoe.domain.CompetitionEvent.{BetMade, BettingLocked, MatchAdded, MatchFinished}
+import com.github.matek2305.djamoe.domain.CompetitionCommand.{AddMatch, FinishMatch, MakeBet}
+import com.github.matek2305.djamoe.domain.CompetitionEvent.{BetMade, MatchAdded, MatchFinished}
 
 import scala.util.{Failure, Success, Try}
 
@@ -17,7 +17,6 @@ final case class Competition(matches: Map[MatchId, Match]) {
   def process(competitionCommand: CompetitionCommand): Try[CompetitionEvent] = competitionCommand match {
     case command: AddMatch => addMatch(command)
     case command: MakeBet => makeBet(command)
-    case command: LockBetting => lockBetting(command)
     case command: FinishMatch => finishMatch(command)
   }
 
@@ -28,9 +27,6 @@ final case class Competition(matches: Map[MatchId, Match]) {
     case BetMade(matchId, who, bet) =>
       Success(Competition(matches.updated(matchId, matches(matchId).addBet(who, bet))))
 
-    case BettingLocked(matchId) =>
-      Success(Competition(matches.updated(matchId, matches(matchId).lockBetting())))
-
     case MatchFinished(matchId, result) =>
       Success(Competition(matches.updated(matchId, matches(matchId).finish(result))))
   }
@@ -40,13 +36,8 @@ final case class Competition(matches: Map[MatchId, Match]) {
   }
 
   private def makeBet(command: MakeBet): Try[CompetitionEvent] = matches(command.matchId).status match {
-    case Match.LOCKED => Failure(new IllegalStateException(s"Betting for match with id=${command.matchId} already locked."))
     case Match.FINISHED => Failure(new IllegalStateException(s"Match with id=${command.matchId} have already finished."))
     case Match.CREATED => Success(command.toBetMade())
-  }
-
-  private def lockBetting(command: LockBetting): Try[CompetitionEvent] = {
-    Success(command.toBettingLocked())
   }
 
   private def finishMatch(command: FinishMatch): Try[CompetitionEvent] = {

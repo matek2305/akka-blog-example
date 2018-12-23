@@ -5,7 +5,7 @@ import java.util.UUID
 
 import akka.serialization.SerializerWithStringManifest
 import com.github.matek2305.djamoe.auth.RegisterResponse.UserRegistered
-import com.github.matek2305.djamoe.domain.CompetitionEvent.{BetMade, BettingLocked, MatchAdded, MatchFinished}
+import com.github.matek2305.djamoe.domain.CompetitionEvent.{BetMade, MatchAdded, MatchFinished}
 import com.github.matek2305.djamoe.domain.MatchId
 import com.sksamuel.avro4s._
 import org.apache.avro.Schema
@@ -20,7 +20,6 @@ class AvroSerializer extends SerializerWithStringManifest {
   final val MatchAddedManifest = classOf[MatchAdded].getName
   final val MatchFinishedManifest = classOf[MatchFinished].getName
   final val BetMadeManifest = classOf[BetMade].getName
-  final val BettingLockedManifest = classOf[BettingLocked].getName
 
   implicit object MatchIdFromValue extends FromValue[MatchId] {
     override def apply(value: Any, field: Schema.Field): MatchId = {
@@ -33,7 +32,6 @@ class AvroSerializer extends SerializerWithStringManifest {
     case event: MatchAdded => toBinaryByClass(event)
     case event: MatchFinished => toBinaryByClass(event)
     case event: BetMade => toBinaryByClass(event)
-    case event: BettingLocked => toBinaryByClass(event)
     case _ => throw new IllegalArgumentException(s"Unknown event to serialize: $o")
   }
 
@@ -54,7 +52,6 @@ class AvroSerializer extends SerializerWithStringManifest {
       case MatchAddedManifest => fromBinaryByClass[MatchAdded](bytes)
       case MatchFinishedManifest => fromBinaryByClass[MatchFinished](bytes)
       case BetMadeManifest => fromBinaryByClass[BetMade](bytes)
-      case BettingLockedManifest => fromBinaryByClass[BettingLocked](bytes)
       case _ => throw new IllegalArgumentException(s"Unable to handle manifest: $manifest")
     }
   }

@@ -2,7 +2,7 @@ package com.github.matek2305.djamoe.domain
 
 import java.time.LocalDateTime
 
-import com.github.matek2305.djamoe.domain.CompetitionEvent.{BetMade, BettingLocked, MatchAdded, MatchFinished}
+import com.github.matek2305.djamoe.domain.CompetitionEvent.{BetMade, MatchAdded, MatchFinished}
 
 sealed trait CompetitionCommand
 
@@ -14,10 +14,6 @@ object CompetitionCommand {
 
   final case class FinishMatch(matchId: MatchId, result: Score) extends CompetitionCommand {
     def toMatchFinished(): MatchFinished = MatchFinished(matchId, result)
-  }
-
-  final case class LockBetting(matchId: MatchId) extends CompetitionCommand {
-    def toBettingLocked(): BettingLocked = BettingLocked(matchId)
   }
 
   final case class MakeBet(matchId: MatchId, who: String, bet: Score) extends CompetitionCommand {

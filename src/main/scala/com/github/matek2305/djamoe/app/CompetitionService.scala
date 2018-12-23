@@ -6,8 +6,8 @@ import akka.stream.Materializer
 import akka.util.Timeout
 import com.github.matek2305.djamoe.app.CompetitionActorQuery.{GetAllMatches, GetMatch, GetPoints}
 import com.github.matek2305.djamoe.app.CompetitionActorResponse.CommandProcessed
-import com.github.matek2305.djamoe.domain.CompetitionCommand.{AddMatch, FinishMatch, LockBetting, MakeBet}
-import com.github.matek2305.djamoe.domain.CompetitionEvent.{BetMade, BettingLocked, MatchAdded, MatchFinished}
+import com.github.matek2305.djamoe.domain.CompetitionCommand.{AddMatch, FinishMatch, MakeBet}
+import com.github.matek2305.djamoe.domain.CompetitionEvent.{BetMade, MatchAdded, MatchFinished}
 import com.github.matek2305.djamoe.domain._
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
@@ -44,10 +44,6 @@ trait CompetitionService {
 
   def makeBet(matchId: MatchId, who: String, score: Score): Future[BetMade] = {
     sendCommand(MakeBet(matchId, who, score)).mapTo[BetMade]
-  }
-
-  def lockBetting(matchId: MatchId): Future[BettingLocked] = {
-    sendCommand(LockBetting(matchId)).mapTo[BettingLocked]
   }
 
   private def sendCommand(command: CompetitionCommand): Future[CompetitionEvent] = {
