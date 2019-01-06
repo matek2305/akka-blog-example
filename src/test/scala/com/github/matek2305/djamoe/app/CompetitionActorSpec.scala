@@ -16,6 +16,7 @@ import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 object CompetitionActorSpec {
 
   abstract class Test(implicit val system: ActorSystem) {
+    protected implicit val makeBetPolicy: MakeBetPolicy = (_: Match) => true
     protected val competitionId: String = UUID.randomUUID().toString
     protected val competitionActor: ActorRef = system.actorOf(CompetitionActor.props(competitionId))
   }

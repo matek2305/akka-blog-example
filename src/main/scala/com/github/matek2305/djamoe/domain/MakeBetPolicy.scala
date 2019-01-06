@@ -1,14 +1,14 @@
 package com.github.matek2305.djamoe.domain
 
-import com.github.matek2305.djamoe.domain.CompetitionCommand.MakeBet
-
-sealed trait MakeBetPolicy {
-  def check(makeBet: MakeBet): Boolean
+trait MakeBetPolicy {
+  def check(game: Match): Boolean
 }
 
 object MakeBetPolicy {
-  final class LockBettingBeforeMatchStart extends MakeBetPolicy {
-    override def check(makeBet: MakeBet): Boolean = true
+  final class LockBettingBeforeMatchStart(howManyMinutesBefore: Int)(implicit timeProvider: TimeProvider) extends MakeBetPolicy {
+    override def check(game: Match): Boolean = {
+      game.startDate.minusMinutes(howManyMinutesBefore).isAfter(timeProvider.getCurrentTime)
+    }
   }
 }
 

@@ -5,8 +5,10 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives._
 import akka.stream.{ActorMaterializer, Materializer}
 import akka.util.Timeout
-import com.github.matek2305.djamoe.app.CompetitionActor
+import com.github.matek2305.djamoe.app.{CompetitionActor, LocalDateTimeProvider}
 import com.github.matek2305.djamoe.auth.AuthActor
+import com.github.matek2305.djamoe.domain.{MakeBetPolicy, TimeProvider}
+import com.github.matek2305.djamoe.domain.MakeBetPolicy.LockBettingBeforeMatchStart
 import com.github.matek2305.djamoe.restapi.{AdminRestApi, RestApi}
 import com.typesafe.config.{Config, ConfigFactory}
 
@@ -14,6 +16,9 @@ import scala.concurrent.duration._
 import scala.concurrent.ExecutionContextExecutor
 
 object WebServer extends App with RestApi with AdminRestApi {
+
+  implicit val timeProvider: TimeProvider = new LocalDateTimeProvider
+  implicit val makeBetPolicy: MakeBetPolicy = new LockBettingBeforeMatchStart(60)
 
   override implicit val system: ActorSystem = ActorSystem()
   override implicit val materializer: Materializer = ActorMaterializer()

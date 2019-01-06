@@ -37,7 +37,7 @@ final case class Competition(matches: Map[MatchId, Match], makeBetPolicy: MakeBe
 
   private def makeBet(command: MakeBet): Try[CompetitionEvent] = matches(command.matchId).status match {
     case Match.FINISHED => Failure(new IllegalStateException(s"Match with id=${command.matchId} have already finished."))
-    case Match.CREATED if makeBetPolicy.check(command) => Success(command.toBetMade())
+    case Match.CREATED if makeBetPolicy.check(matches(command.matchId)) => Success(command.toBetMade())
     case Match.CREATED => Failure(new IllegalStateException(s"Betting policy violated for match with id=${command.matchId}"))
   }
 

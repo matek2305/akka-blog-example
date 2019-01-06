@@ -4,14 +4,13 @@ import akka.actor.{ActorRef, DiagnosticActorLogging, Props}
 import akka.persistence.{PersistentActor, RecoveryCompleted}
 import com.github.matek2305.djamoe.app.CompetitionActorQuery.{GetAllMatches, GetMatch, GetPoints}
 import com.github.matek2305.djamoe.app.CompetitionActorResponse.{CommandProcessed, CommandProcessingFailed}
-import com.github.matek2305.djamoe.domain.MakeBetPolicy.LockBettingBeforeMatchStart
-import com.github.matek2305.djamoe.domain.{Competition, CompetitionCommand, CompetitionEvent}
+import com.github.matek2305.djamoe.domain.{Competition, CompetitionCommand, CompetitionEvent, MakeBetPolicy}
 
 import scala.util.{Failure, Success}
 
-class CompetitionActor(id: String) extends PersistentActor with DiagnosticActorLogging {
+class CompetitionActor(id: String)(implicit makeBetPolicy: MakeBetPolicy) extends PersistentActor with DiagnosticActorLogging {
 
-  private var competition = Competition(new LockBettingBeforeMatchStart)
+  private var competition = Competition(makeBetPolicy)
 
   override def persistenceId: String = id
 
@@ -49,5 +48,5 @@ class CompetitionActor(id: String) extends PersistentActor with DiagnosticActorL
 }
 
 object CompetitionActor {
-  def props(id: String) = Props(new CompetitionActor(id))
+  def props(id: String)(implicit makeBetPolicy: MakeBetPolicy) = Props(new CompetitionActor(id))
 }
