@@ -27,6 +27,7 @@ libraryDependencies ++= {
     "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % Test,
     "com.github.dnvriend" %% "akka-persistence-inmemory" % "2.5.1.1" % Test,
     "org.scalatest" %% "scalatest" % "3.0.1" % Test,
+    "org.mockito" %% "mockito-scala" % "1.0.8" % Test,
     "com.tngtech.archunit" % "archunit" % "0.9.1" % Test
   )
 }
