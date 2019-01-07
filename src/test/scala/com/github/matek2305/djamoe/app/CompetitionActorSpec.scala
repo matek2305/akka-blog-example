@@ -7,21 +7,10 @@ import akka.actor.{ActorRef, ActorSystem, PoisonPill}
 import akka.testkit.{ImplicitSender, TestKit}
 import com.github.matek2305.djamoe.app.CompetitionActorQuery.{GetAllMatches, GetMatch, GetPoints}
 import com.github.matek2305.djamoe.app.CompetitionActorResponse.{CommandProcessed, CommandProcessingFailed}
-import com.github.matek2305.djamoe.app.CompetitionActorSpec.Test
 import com.github.matek2305.djamoe.domain.CompetitionCommand.{AddMatch, FinishMatch, MakeBet}
 import com.github.matek2305.djamoe.domain.CompetitionEvent.{BetMade, MatchFinished}
 import com.github.matek2305.djamoe.domain._
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
-
-object CompetitionActorSpec {
-
-  abstract class Test(implicit val system: ActorSystem) {
-    protected implicit val makeBetPolicy: MakeBetPolicy = (_: Match) => true
-    protected val competitionId: String = UUID.randomUUID().toString
-    protected val competitionActor: ActorRef = system.actorOf(CompetitionActor.props(competitionId))
-  }
-
-}
 
 class CompetitionActorSpec
   extends TestKit(ActorSystem("testSystem"))
@@ -29,6 +18,13 @@ class CompetitionActorSpec
     with Matchers
     with BeforeAndAfterAll
     with ImplicitSender {
+
+  trait Test {
+    implicit val makeBetPolicy: MakeBetPolicy = (_: Match) => true
+
+    val competitionId: String = UUID.randomUUID().toString
+    val competitionActor: ActorRef = system.actorOf(CompetitionActor.props(competitionId))
+  }
 
   override def afterAll: Unit = {
     TestKit.shutdownActorSystem(system)

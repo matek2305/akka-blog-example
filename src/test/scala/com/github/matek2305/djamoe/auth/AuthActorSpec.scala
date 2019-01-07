@@ -7,19 +7,10 @@ import akka.testkit.{ImplicitSender, TestKit}
 import authentikat.jwt.JsonWebToken
 import com.github.matek2305.djamoe.auth.AuthActorCommand.Register
 import com.github.matek2305.djamoe.auth.AuthActorQuery.GetAccessToken
-import com.github.matek2305.djamoe.auth.AuthActorSpec.Test
 import com.github.matek2305.djamoe.auth.GetAccessTokenResponse.{AccessToken, InvalidCredentials}
 import com.github.matek2305.djamoe.auth.RegisterResponse.{UserRegistered, UsernameTaken}
 import com.typesafe.config.ConfigFactory
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
-
-object AuthActorSpec {
-
-  abstract class Test(implicit val system: ActorSystem) {
-    protected val authActorId: String = UUID.randomUUID().toString
-    protected val authActor: ActorRef = system.actorOf(AuthActor.props(authActorId))
-  }
-}
 
 class AuthActorSpec
   extends TestKit(ActorSystem("testSystem"))
@@ -27,6 +18,11 @@ class AuthActorSpec
     with Matchers
     with BeforeAndAfterAll
     with ImplicitSender {
+
+  trait Test {
+    val authActorId: String = UUID.randomUUID().toString
+    val authActor: ActorRef = system.actorOf(AuthActor.props(authActorId))
+  }
 
   override def afterAll: Unit = {
     TestKit.shutdownActorSystem(system)
