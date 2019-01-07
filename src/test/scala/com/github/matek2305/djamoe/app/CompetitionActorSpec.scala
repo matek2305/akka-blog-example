@@ -136,9 +136,7 @@ class CompetitionActorSpec
           sampleAddMatchCommand.homeTeamName,
           sampleAddMatchCommand.awayTeamName,
           sampleAddMatchCommand.startDate,
-          bets = Map(
-            "Foo" -> Bet(Score(2, 0))
-          )
+          bets = Map("Foo" -> Bet(Score(2, 0)))
         )
       ))
     }
