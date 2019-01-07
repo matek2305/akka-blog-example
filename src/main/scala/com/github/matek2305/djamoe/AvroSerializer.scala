@@ -16,10 +16,10 @@ class AvroSerializer extends SerializerWithStringManifest {
 
   override def manifest(o: AnyRef): String = o.getClass.getName
 
-  final val UserRegisteredManifest = classOf[UserRegistered].getName
-  final val MatchAddedManifest = classOf[MatchAdded].getName
-  final val MatchFinishedManifest = classOf[MatchFinished].getName
-  final val BetMadeManifest = classOf[BetMade].getName
+  final val userRegisteredManifest = classOf[UserRegistered].getName
+  final val matchAddedManifest = classOf[MatchAdded].getName
+  final val matchFinishedManifest = classOf[MatchFinished].getName
+  final val betMadeManifest = classOf[BetMade].getName
 
   implicit object MatchIdFromValue extends FromValue[MatchId] {
     override def apply(value: Any, field: Schema.Field): MatchId = {
@@ -48,10 +48,10 @@ class AvroSerializer extends SerializerWithStringManifest {
 
   override def fromBinary(bytes: Array[Byte], manifest: String): AnyRef = {
     manifest match {
-      case UserRegisteredManifest => fromBinaryByClass[UserRegistered](bytes)
-      case MatchAddedManifest => fromBinaryByClass[MatchAdded](bytes)
-      case MatchFinishedManifest => fromBinaryByClass[MatchFinished](bytes)
-      case BetMadeManifest => fromBinaryByClass[BetMade](bytes)
+      case `userRegisteredManifest` => fromBinaryByClass[UserRegistered](bytes)
+      case `matchAddedManifest` => fromBinaryByClass[MatchAdded](bytes)
+      case `matchFinishedManifest` => fromBinaryByClass[MatchFinished](bytes)
+      case `betMadeManifest` => fromBinaryByClass[BetMade](bytes)
       case _ => throw new IllegalArgumentException(s"Unable to handle manifest: $manifest")
     }
   }
