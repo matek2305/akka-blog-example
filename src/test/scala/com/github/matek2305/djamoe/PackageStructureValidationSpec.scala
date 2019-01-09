@@ -1,6 +1,5 @@
 package com.github.matek2305.djamoe
 
-import com.tngtech.archunit.core.domain.JavaClasses
 import com.tngtech.archunit.core.importer.ClassFileImporter
 import com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses
 import com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices
@@ -8,8 +7,8 @@ import org.scalatest.{FlatSpecLike, Suite}
 
 class PackageStructureValidationSpec extends Suite with FlatSpecLike {
 
-  private val classes: JavaClasses = new ClassFileImporter()
-    .importPackages("com.github.matek2305.djamoe")
+  private val classes = new ClassFileImporter()
+    .importPackages(this.getClass.getPackage.getName)
 
   "package structure" should "have no dependency from domain to application" in {
     noClasses()
