@@ -22,3 +22,8 @@ jobs:
         - docker login -u _ -p "$HEROKU_API_KEY" registry.heroku.com
         - docker tag matek2305/djamoe-betting-engine registry.heroku.com/djamoe/web
         - docker push registry.heroku.com/djamoe/web
+
+    - stage: release app in heroku
+      if: branch = master
+      script:
+        - heroku container:release web -a djamoe
